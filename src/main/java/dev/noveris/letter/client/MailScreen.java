@@ -87,7 +87,6 @@ public final class MailScreen extends Screen {
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics, mouseX, mouseY, partialTick);
         int left = panelLeft();
         int top = top();
         int right = left + panelWidth();
@@ -106,6 +105,31 @@ public final class MailScreen extends Screen {
         graphics.drawString(font, "◆  SERVIÇO POSTAL ATIVO", left + panelWidth() / 2 - 62, bottom() - 16, MUTED, false);
         graphics.drawString(font, "NOVERIS", right - 52, bottom() - 16, GOLD, false);
         super.render(graphics, mouseX, mouseY, partialTick);
+        drawCustomButtons(graphics, mouseX, mouseY);
+    }
+
+    private void drawCustomButtons(GuiGraphics graphics, int mouseX, int mouseY) {
+        int left = panelLeft();
+        int width = panelWidth();
+        int tabWidth = (width - 24) / 4 - 4;
+        for (int i = 0; i < TABS.length; i++) {
+            int x = left + 12 + i * ((width - 24) / 4);
+            drawNoverisButton(graphics, x, top() + 42, tabWidth, 24, TABS[i], i == tab, mouseX, mouseY);
+        }
+        if (tab == 2) {
+            drawNoverisButton(graphics, left + 24, bottom() - 42, 110, 28, "CANCELAR", false, mouseX, mouseY);
+            drawNoverisButton(graphics, left + width - 154, bottom() - 42, 130, 28, "SELAR E ENVIAR", true, mouseX, mouseY);
+        }
+    }
+
+    private void drawNoverisButton(GuiGraphics graphics, int x, int y, int buttonWidth, int buttonHeight,
+                                   String label, boolean selected, int mouseX, int mouseY) {
+        boolean hovered = mouseX >= x && mouseX < x + buttonWidth && mouseY >= y && mouseY < y + buttonHeight;
+        int fill = selected ? ACTIVE : hovered ? 0xFFF2C94C : PANEL;
+        int textColor = hovered || selected ? TEXT : MUTED;
+        graphics.fill(x, y, x + buttonWidth, y + buttonHeight, GOLD);
+        graphics.fill(x + 2, y + 2, x + buttonWidth - 2, y + buttonHeight - 2, fill);
+        graphics.drawCenteredString(font, label, x + buttonWidth / 2, y + (buttonHeight - 8) / 2, textColor);
     }
 
     private void drawEmpty(GuiGraphics graphics, String title, String description) {
