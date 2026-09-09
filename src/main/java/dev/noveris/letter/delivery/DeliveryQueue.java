@@ -26,6 +26,10 @@ public final class DeliveryQueue {
         return entries.stream().anyMatch(entry -> entry.id().equals(deliveryId));
     }
 
+    public synchronized boolean containsLetter(UUID letterId) {
+        return entries.stream().anyMatch(entry -> entry.letterId().equals(letterId));
+    }
+
     public synchronized Optional<DeliveryEntry> find(UUID deliveryId) {
         return entries.stream().filter(entry -> entry.id().equals(deliveryId)).findFirst();
     }
