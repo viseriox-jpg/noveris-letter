@@ -9,3 +9,9 @@ runs/
 .project
 .settings/
 *.log
+.gradle-local/
+.gradle-home/
+.local-maven/
+.jdk/
+*.tar.gz
+*.zip
