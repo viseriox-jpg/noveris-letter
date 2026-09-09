@@ -57,6 +57,20 @@ public final class MailService {
         return Optional.of(letter);
     }
 
+    public List<MailLetter> inbox(ServerPlayer viewer) {
+        return lettersFor(viewer, data().inboxByPlayer().getOrDefault(viewer.getUUID(), List.of()));
+    }
+
+    public List<MailLetter> sent(ServerPlayer viewer) {
+        return lettersFor(viewer, data().sentByPlayer().getOrDefault(viewer.getUUID(), List.of()));
+    }
+
+    private List<MailLetter> lettersFor(ServerPlayer viewer, List<UUID> ids) {
+        return ids.stream().map(data().letters()::get).filter(Objects::nonNull)
+                .filter(letter -> letter.senderId().equals(viewer.getUUID()) || letter.recipientId().equals(viewer.getUUID()))
+                .toList();
+    }
+
     public boolean markDelivered(UUID letterId, long now) {
         MailSavedData data = data(); MailLetter letter = data.letters().get(letterId);
         if (letter == null || letter.status() == MailStatus.DELETED) return false;
