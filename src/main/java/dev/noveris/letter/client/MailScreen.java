@@ -47,7 +47,7 @@ public final class MailScreen extends Screen {
     }
 
     /** Keep the world crisp; Screen#render calls this hook before drawing widgets. */
-    @Override protected void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         // Intentionally empty: the world rendered by Minecraft remains visible without blur.
     }
 
