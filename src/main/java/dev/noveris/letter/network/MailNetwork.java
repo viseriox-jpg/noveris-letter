@@ -3,6 +3,7 @@ package dev.noveris.letter.network;
 import com.mojang.authlib.GameProfile;
 import dev.noveris.letter.courier.CourierAppearanceRegistry;
 import dev.noveris.letter.mail.MailService;
+import dev.noveris.letter.delivery.DeliveryManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -50,6 +51,7 @@ public final class MailNetwork {
                     ? "Sua correspondência foi selada e confiada aos mensageiros de Noveris."
                     : "Não foi possível selar esta correspondência.";
             PacketDistributor.sendToPlayer(sender, new MailActionResultPayload(result == MailService.SendResult.SUCCESS, message));
+            if (result == MailService.SendResult.SUCCESS && online != null) DeliveryManager.processFor(sender.server, online);
         });
     }
 }
