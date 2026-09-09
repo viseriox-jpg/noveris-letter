@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
