@@ -37,7 +37,7 @@ public final class MailSavedData extends SavedData {
     public static MailSavedData get(ServerLevel level) {
         ServerLevel storageLevel = level.getServer().overworld();
         return storageLevel.getDataStorage().computeIfAbsent(
-                new SavedData.Factory<MailSavedData>(MailSavedData::load, MailSavedData::new, DataFixTypes.LEVEL), DATA_NAME);
+                new SavedData.Factory<MailSavedData>(MailSavedData::new, MailSavedData::load, DataFixTypes.LEVEL), DATA_NAME);
     }
 
     public Map<UUID, MailLetter> letters() { return letters; }
