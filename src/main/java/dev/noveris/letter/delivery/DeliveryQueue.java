@@ -40,6 +40,17 @@ public final class DeliveryQueue {
                 .findFirst();
     }
 
+    public synchronized Optional<DeliveryEntry> nextReadyFor(UUID recipientId, long now) {
+        return entries.stream()
+                .filter(entry -> entry.recipientId().equals(recipientId))
+                .filter(entry -> entry.earliestDeliveryTime() <= now)
+                .filter(entry -> entry.state() == DeliveryState.QUEUED
+                        || entry.state() == DeliveryState.READY
+                        || entry.state() == DeliveryState.RETRY_WAIT)
+                .sorted(ORDER)
+                .findFirst();
+    }
+
     public synchronized void replace(DeliveryEntry updated) {
         for (int i = 0; i < entries.size(); i++) {
             if (entries.get(i).id().equals(updated.id())) {
