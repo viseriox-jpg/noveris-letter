@@ -19,27 +19,38 @@ public final class MailService {
     private final MinecraftServer server;
     private final CourierAppearanceRegistry appearances;
     private final int maxMessageLength;
+    private final int maxSubjectLength;
 
     public MailService(MinecraftServer server, CourierAppearanceRegistry appearances, int maxMessageLength) {
+        this(server, appearances, maxMessageLength, 120);
+    }
+
+    public MailService(MinecraftServer server, CourierAppearanceRegistry appearances, int maxMessageLength, int maxSubjectLength) {
         this.server = Objects.requireNonNull(server, "server");
         this.appearances = Objects.requireNonNull(appearances, "appearances");
         if (maxMessageLength < 1) throw new IllegalArgumentException("maxMessageLength must be positive");
         this.maxMessageLength = maxMessageLength;
+        this.maxSubjectLength = maxSubjectLength;
     }
 
     private MailSavedData data() { return MailSavedData.get(server.overworld()); }
 
     public SendResult sendLetter(ServerPlayer sender, UUID recipientId, String content, long now) {
+        return sendLetter(sender, recipientId, "", content, now);
+    }
+
+    public SendResult sendLetter(ServerPlayer sender, UUID recipientId, String subject, String content, long now) {
         Objects.requireNonNull(sender, "sender");
         if (recipientId == null) return SendResult.INVALID_RECIPIENT;
         if (content == null || content.isBlank() || content.length() > maxMessageLength) return SendResult.INVALID_CONTENT;
+        if (subject == null || subject.length() > maxSubjectLength) return SendResult.INVALID_SUBJECT;
         MailSavedData data = data();
         if (data.blockedByPlayer().getOrDefault(recipientId, List.of()).contains(sender.getUUID())) return SendResult.UNAVAILABLE;
 
         UUID id = UUID.randomUUID();
         String recipientName = server.getProfileCache().get(recipientId).map(profile -> profile.getName()).orElse("Unknown player");
         MailLetter letter = new MailLetter(id, sender.getUUID(), sender.getGameProfile().getName(), recipientId,
-                recipientName,
+                recipientName, subject.trim(),
                 content, now, now, -1L, -1L, MailStatus.IN_TRANSIT);
         CourierProfile profile = data.profile(sender.getUUID());
         DeliveryEntry delivery = DeliveryFactory.create(id, sender.getUUID(), recipientId, DeliveryType.NORMAL,
@@ -107,5 +118,5 @@ public final class MailService {
         if (blockedIds == null) return false; boolean changed = blockedIds.remove(blocked); if (changed) data.markChanged(); return changed;
     }
 
-    public enum SendResult { SUCCESS, INVALID_RECIPIENT, INVALID_CONTENT, UNAVAILABLE }
+    public enum SendResult { SUCCESS, INVALID_RECIPIENT, INVALID_CONTENT, INVALID_SUBJECT, UNAVAILABLE }
 }
