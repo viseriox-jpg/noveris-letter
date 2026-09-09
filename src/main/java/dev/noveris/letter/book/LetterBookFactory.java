@@ -8,8 +8,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
-import net.minecraft.world.item.component.Filterable;
 import net.minecraft.world.item.component.WrittenBookContent;
+import net.minecraft.server.network.Filterable;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public final class LetterBookFactory {
         String body = "Ao estimado " + letter.recipientName() + ",\n\n" + letter.content()
                 + "\n\n— Enviado por " + letter.senderName() + "\nSob o selo postal de Noveris";
         book.set(DataComponents.CUSTOM_NAME, Component.literal(title));
-        book.set(DataComponents.WRITTEN_BOOK, new WrittenBookContent(
+        book.set(DataComponents.WRITTEN_BOOK_CONTENT, new WrittenBookContent(
                 Filterable.passThrough(title), "Serviço Postal de Noveris", 0,
                 List.of(Filterable.passThrough(Component.literal(body))), true));
         CompoundTag identity = new CompoundTag();
