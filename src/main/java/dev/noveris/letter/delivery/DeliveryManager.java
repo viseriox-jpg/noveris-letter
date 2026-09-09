@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /** Processes only ready queue entries; presentation can be added without changing this contract. */
 public final class DeliveryManager {
@@ -24,13 +25,23 @@ public final class DeliveryManager {
         for (int i = 0; i < MAX_DELIVERIES_PER_TICK; i++) processOne(server);
     }
 
+    public static void playerTick(PlayerTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || player.tickCount % TICK_INTERVAL != 0) return;
+        processOne(player.server, player);
+    }
+
     private static void processOne(MinecraftServer server) {
+        processOne(server, null);
+    }
+
+    private static void processOne(MinecraftServer server, ServerPlayer preferredRecipient) {
         MailService service = new MailService(server, new CourierAppearanceRegistry(), 1500, 120);
         var data = dev.noveris.letter.mail.MailSavedData.get(server.overworld());
         var next = data.deliveryQueue().nextReady(System.currentTimeMillis());
         if (next.isEmpty()) return;
         DeliveryEntry entry = next.get();
-        ServerPlayer recipient = server.getPlayerList().getPlayer(entry.recipientId());
+        ServerPlayer recipient = preferredRecipient != null && preferredRecipient.getUUID().equals(entry.recipientId())
+                ? preferredRecipient : server.getPlayerList().getPlayer(entry.recipientId());
         if (recipient == null) return;
         MailLetter letter = service.findVisible(recipient, entry.letterId()).orElse(null);
         if (letter == null) {
