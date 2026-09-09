@@ -48,6 +48,7 @@ public final class DeliveryManager {
     private static boolean processOne(MinecraftServer server, ServerPlayer preferredRecipient) {
         MailService service = new MailService(server, new CourierAppearanceRegistry(), 1500, 120);
         var data = dev.noveris.letter.mail.MailSavedData.get(server.overworld());
+        reconcilePendingLetters(data, preferredRecipient);
         var next = preferredRecipient == null
                 ? data.deliveryQueue().nextReady(System.currentTimeMillis())
                 : data.deliveryQueue().nextReadyFor(preferredRecipient.getUUID(), System.currentTimeMillis());
@@ -73,5 +74,20 @@ public final class DeliveryManager {
             recipient.displayClientMessage(Component.literal("Uma correspondência selada foi confiada às suas mãos."), true);
         }
         return true;
+    }
+
+    /** Repairs queue entries after an interrupted save or an older mod version. */
+    private static void reconcilePendingLetters(dev.noveris.letter.mail.MailSavedData data, ServerPlayer recipient) {
+        long now = System.currentTimeMillis();
+        boolean changed = false;
+        for (MailLetter letter : data.letters().values()) {
+            if (letter.status() != dev.noveris.letter.mail.MailStatus.IN_TRANSIT) continue;
+            if (recipient != null && !letter.recipientId().equals(recipient.getUUID())) continue;
+            if (data.deliveryQueue().containsLetter(letter.id())) continue;
+            data.deliveryQueue().enqueue(DeliveryFactory.create(letter.id(), letter.senderId(), letter.recipientId(),
+                    DeliveryType.NORMAL, DeliveryPriority.NORMAL, CourierAppearanceRegistry.DEFAULT_ID, now, now));
+            changed = true;
+        }
+        if (changed) data.markChanged();
     }
 }
