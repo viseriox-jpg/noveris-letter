@@ -16,7 +16,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 /** Processes only ready queue entries; presentation can be added without changing this contract. */
 public final class DeliveryManager {
     private static final int TICK_INTERVAL = 20;
-    private static final int MAX_DELIVERIES_PER_TICK = 1;
+    private static final int MAX_DELIVERIES_PER_TICK = 4;
 
     private DeliveryManager() { }
 
@@ -36,33 +36,35 @@ public final class DeliveryManager {
     }
 
     public static void processFor(MinecraftServer server, ServerPlayer recipient) {
-        processOne(server, recipient);
+        for (int i = 0; i < MAX_DELIVERIES_PER_TICK; i++) {
+            if (!processOne(server, recipient)) return;
+        }
     }
 
     private static void processOne(MinecraftServer server) {
         processOne(server, null);
     }
 
-    private static void processOne(MinecraftServer server, ServerPlayer preferredRecipient) {
+    private static boolean processOne(MinecraftServer server, ServerPlayer preferredRecipient) {
         MailService service = new MailService(server, new CourierAppearanceRegistry(), 1500, 120);
         var data = dev.noveris.letter.mail.MailSavedData.get(server.overworld());
         var next = preferredRecipient == null
                 ? data.deliveryQueue().nextReady(System.currentTimeMillis())
                 : data.deliveryQueue().nextReadyFor(preferredRecipient.getUUID(), System.currentTimeMillis());
-        if (next.isEmpty()) return;
+        if (next.isEmpty()) return false;
         DeliveryEntry entry = next.get();
         ServerPlayer recipient = preferredRecipient != null && preferredRecipient.getUUID().equals(entry.recipientId())
                 ? preferredRecipient : server.getPlayerList().getPlayer(entry.recipientId());
-        if (recipient == null) return;
+        if (recipient == null) return false;
         MailLetter letter = service.findVisible(recipient, entry.letterId()).orElse(null);
         if (letter == null) {
             data.deliveryQueue().remove(entry.id());
             data.markChanged();
-            return;
+            return true;
         }
         if (!recipient.getInventory().add(LetterBookFactory.create(letter))) {
             recipient.displayClientMessage(Component.literal("O mensageiro hesita — não há espaço para a correspondência."), true);
-            return;
+            return false;
         }
         if (service.markDelivered(letter.id(), System.currentTimeMillis())) {
             data.deliveryQueue().remove(entry.id());
@@ -70,5 +72,6 @@ public final class DeliveryManager {
             recipient.playNotifySound(SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 0.8F, 0.9F);
             recipient.displayClientMessage(Component.literal("Uma correspondência selada foi confiada às suas mãos."), true);
         }
+        return true;
     }
 }
