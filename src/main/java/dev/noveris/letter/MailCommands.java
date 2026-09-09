@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.GameProfileArgument;
@@ -55,7 +56,7 @@ public final class MailCommands {
         return 1;
     }
 
-    private static int send(CommandContext<CommandSourceStack> context) throws Exception {
+    private static int send(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer sender = context.getSource().getPlayerOrException();
         Collection<GameProfile> profiles = GameProfileArgument.getGameProfiles(context, "destinatario");
         if (profiles.size() != 1) {
@@ -73,7 +74,7 @@ public final class MailCommands {
         return 1;
     }
 
-    private static int inbox(CommandContext<CommandSourceStack> context) throws Exception {
+    private static int inbox(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         List<MailLetter> letters = service(player).inbox(player);
         context.getSource().sendSuccess(() -> Component.literal("Recebidas (" + letters.size() + ")"), false);
@@ -81,7 +82,7 @@ public final class MailCommands {
         return letters.size();
     }
 
-    private static int sent(CommandContext<CommandSourceStack> context) throws Exception {
+    private static int sent(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         List<MailLetter> letters = service(player).sent(player);
         context.getSource().sendSuccess(() -> Component.literal("Enviadas (" + letters.size() + ")"), false);
@@ -89,7 +90,7 @@ public final class MailCommands {
         return letters.size();
     }
 
-    private static int read(CommandContext<CommandSourceStack> context) throws Exception {
+    private static int read(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         MailLetter letter = find(player, context);
         if (letter == null || !letter.recipientId().equals(player.getUUID())) return 0;
@@ -98,7 +99,7 @@ public final class MailCommands {
         return 1;
     }
 
-    private static int archive(CommandContext<CommandSourceStack> context) throws Exception {
+    private static int archive(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         MailLetter letter = find(player, context);
         boolean changed = letter != null && service(player).archive(player, letter.id());
@@ -107,7 +108,7 @@ public final class MailCommands {
         return 1;
     }
 
-    private static int delete(CommandContext<CommandSourceStack> context) throws Exception {
+    private static int delete(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         MailLetter letter = find(player, context);
         boolean changed = letter != null && service(player).delete(player, letter.id());
