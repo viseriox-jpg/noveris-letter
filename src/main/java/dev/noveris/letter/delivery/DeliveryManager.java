@@ -11,6 +11,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 /** Processes only ready queue entries; presentation can be added without changing this contract. */
 public final class DeliveryManager {
@@ -30,6 +31,14 @@ public final class DeliveryManager {
         processOne(player.server, player);
     }
 
+    public static void playerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) processFor(player.server, player);
+    }
+
+    public static void processFor(MinecraftServer server, ServerPlayer recipient) {
+        processOne(server, recipient);
+    }
+
     private static void processOne(MinecraftServer server) {
         processOne(server, null);
     }
@@ -37,7 +46,9 @@ public final class DeliveryManager {
     private static void processOne(MinecraftServer server, ServerPlayer preferredRecipient) {
         MailService service = new MailService(server, new CourierAppearanceRegistry(), 1500, 120);
         var data = dev.noveris.letter.mail.MailSavedData.get(server.overworld());
-        var next = data.deliveryQueue().nextReady(System.currentTimeMillis());
+        var next = preferredRecipient == null
+                ? data.deliveryQueue().nextReady(System.currentTimeMillis())
+                : data.deliveryQueue().nextReadyFor(preferredRecipient.getUUID(), System.currentTimeMillis());
         if (next.isEmpty()) return;
         DeliveryEntry entry = next.get();
         ServerPlayer recipient = preferredRecipient != null && preferredRecipient.getUUID().equals(entry.recipientId())
