@@ -135,7 +135,7 @@ public final class MailSavedData extends SavedData {
     private static CompoundTag writeLetter(MailLetter letter) {
         CompoundTag tag = new CompoundTag();
         tag.putUUID("id", letter.id()); tag.putUUID("sender", letter.senderId()); tag.putString("sender_name", letter.senderName());
-        tag.putUUID("recipient", letter.recipientId()); tag.putString("recipient_name", letter.recipientName()); tag.putString("content", letter.content());
+        tag.putUUID("recipient", letter.recipientId()); tag.putString("recipient_name", letter.recipientName()); tag.putString("subject", letter.subject()); tag.putString("content", letter.content());
         tag.putLong("created", letter.createdAt()); tag.putLong("sent", letter.sentAt()); tag.putLong("delivered", letter.deliveredAt()); tag.putLong("read", letter.readAt());
         tag.putString("status", letter.status().name());
         return tag;
@@ -143,7 +143,7 @@ public final class MailSavedData extends SavedData {
 
     private static MailLetter readLetter(CompoundTag tag) {
         return new MailLetter(tag.getUUID("id"), tag.getUUID("sender"), tag.getString("sender_name"), tag.getUUID("recipient"),
-                tag.getString("recipient_name"), tag.getString("content"), tag.getLong("created"), tag.getLong("sent"),
+                tag.getString("recipient_name"), tag.getString("subject"), tag.getString("content"), tag.getLong("created"), tag.getLong("sent"),
                 tag.getLong("delivered"), tag.getLong("read"), MailStatus.valueOf(tag.getString("status")));
     }
 
