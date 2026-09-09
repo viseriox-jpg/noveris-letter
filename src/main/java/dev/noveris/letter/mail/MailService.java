@@ -85,9 +85,16 @@ public final class MailService {
     public boolean markDelivered(UUID letterId, long now) {
         MailSavedData data = data(); MailLetter letter = data.letters().get(letterId);
         if (letter == null || letter.status() == MailStatus.DELETED) return false;
-        data.letters().put(letterId, letter.delivered(now));
-        data.inboxByPlayer().computeIfAbsent(letter.recipientId(), ignored -> new java.util.ArrayList<>()).add(letterId);
-        data.markChanged(); return true;
+        List<UUID> inbox = data.inboxByPlayer().computeIfAbsent(letter.recipientId(), ignored -> new java.util.ArrayList<>());
+        if (letter.status() != MailStatus.DELIVERED && letter.status() != MailStatus.READ) {
+            data.letters().put(letterId, letter.delivered(now));
+            data.markChanged();
+        }
+        if (!inbox.contains(letterId)) {
+            inbox.add(letterId);
+            data.markChanged();
+        }
+        return true;
     }
 
     public boolean markRead(ServerPlayer reader, UUID letterId, long now) {
