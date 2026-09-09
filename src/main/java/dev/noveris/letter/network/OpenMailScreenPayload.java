@@ -9,6 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public record OpenMailScreenPayload(int tab) implements CustomPacketPayload {
     public static final Type<OpenMailScreenPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NoverisLetter.MOD_ID, "open_mail_screen"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, OpenMailScreenPayload> STREAM_CODEC = ByteBufCodecs.VAR_INT.map(OpenMailScreenPayload::new, OpenMailScreenPayload::tab);
+    public static final StreamCodec<RegistryFriendlyByteBuf, OpenMailScreenPayload> STREAM_CODEC = StreamCodec.of(
+            (buf, payload) -> buf.writeVarInt(payload.tab()),
+            buf -> new OpenMailScreenPayload(buf.readVarInt()));
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
 }
