@@ -7,6 +7,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import dev.noveris.letter.network.MailNetwork;
+import dev.noveris.letter.delivery.DeliveryManager;
 import org.slf4j.Logger;
 
 @Mod(NoverisLetter.MOD_ID)
@@ -17,6 +18,7 @@ public final class NoverisLetter {
     public NoverisLetter(IEventBus modBus) {
         LOGGER.info("Initializing Noveris Letter");
         NeoForge.EVENT_BUS.addListener(NoverisLetter::registerCommands);
+        NeoForge.EVENT_BUS.addListener(DeliveryManager::tick);
         modBus.addListener(NoverisLetter::registerPayloads);
     }
 
