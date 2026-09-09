@@ -31,7 +31,7 @@ public final class MailService {
 
     public SendResult sendLetter(ServerPlayer sender, UUID recipientId, String content, long now) {
         Objects.requireNonNull(sender, "sender");
-        if (recipientId == null || recipientId.equals(sender.getUUID())) return SendResult.INVALID_RECIPIENT;
+        if (recipientId == null) return SendResult.INVALID_RECIPIENT;
         if (content == null || content.isBlank() || content.length() > maxMessageLength) return SendResult.INVALID_CONTENT;
         MailSavedData data = data();
         if (data.blockedByPlayer().getOrDefault(recipientId, List.of()).contains(sender.getUUID())) return SendResult.UNAVAILABLE;
