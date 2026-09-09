@@ -1,6 +1,8 @@
 package dev.noveris.letter.client;
 
 import dev.noveris.letter.network.SendLetterPayload;
+import dev.noveris.letter.network.MailSnapshotPayload;
+import dev.noveris.letter.network.RequestMailSnapshotPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -8,6 +10,8 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
+
+import java.util.List;
 
 /** Noveris postal panel. It contains presentation only; mutations go through payloads. */
 public final class MailScreen extends Screen {
@@ -23,6 +27,7 @@ public final class MailScreen extends Screen {
     private EditBox recipient;
     private EditBox subject;
     private EditBox message;
+    private List<MailSnapshotPayload.Entry> entries = List.of();
 
     public MailScreen(int tab) {
         super(Component.literal("Serviço Postal de Noveris"));
@@ -68,6 +73,11 @@ public final class MailScreen extends Screen {
         tab = index;
         clearWidgets();
         init();
+        PacketDistributor.sendToServer(new RequestMailSnapshotPayload(index));
+    }
+
+    public void setSnapshot(MailSnapshotPayload payload) {
+        if (payload.tab() == tab) entries = payload.entries();
     }
 
     private void send() {
@@ -89,8 +99,7 @@ public final class MailScreen extends Screen {
         drawCorners(graphics, left + 8, top + 8, right - 8, bottom() - 8);
         graphics.drawString(font, "SERVIÇO POSTAL DE NOVERIS", left + 18, top + 15, GOLD, false);
         graphics.drawString(font, tab == 2 ? "ESCREVER CORRESPONDÊNCIA" : TABS[tab], left + 24, top + 72, 0xFFFFFBEB, false);
-        if (tab == 0) drawEmpty(graphics, "NENHUMA CORRESPONDÊNCIA ABERTA", "As cartas recebidas aparecerão aqui.");
-        if (tab == 1) drawEmpty(graphics, "CORRESPONDÊNCIAS ENVIADAS", "Suas cartas seladas aparecerão aqui.");
+        if (tab == 0 || tab == 1) drawLetters(graphics);
         if (tab == 3) drawEmpty(graphics, "MEUS CARTEIROS", "Seu portador selecionado aparecerá aqui.");
         if (tab == 2 && message != null) graphics.drawString(font, message.getValue().length() + " / 1500", right - 88, top + 250, MUTED, false);
         graphics.drawString(font, "ESC  FECHAR", left + 18, bottom() - 16, MUTED, false);
@@ -104,6 +113,34 @@ public final class MailScreen extends Screen {
         int center = left + panelWidth() / 2;
         graphics.drawCenteredString(font, title, center, top() + 150, GOLD);
         graphics.drawCenteredString(font, description, center, top() + 174, MUTED);
+    }
+
+    private void drawLetters(GuiGraphics graphics) {
+        if (entries.isEmpty()) {
+            drawEmpty(graphics, tab == 0 ? "NENHUMA CORRESPONDÊNCIA ABERTA" : "NENHUMA CARTA SELADA", "As cartas aparecerão aqui quando chegarem.");
+            return;
+        }
+        int left = panelLeft() + 24;
+        int right = panelLeft() + panelWidth() - 24;
+        int y = top() + 92;
+        for (MailSnapshotPayload.Entry entry : entries.stream().limit(8).toList()) {
+            graphics.fill(left, y, right, y + 38, 0xFF0D0C09);
+            graphics.fill(left, y, left + 3, y + 38, entry.status().name().equals("READ") ? MUTED : GOLD);
+            String person = tab == 0 ? "De: " + entry.sender() : "Para: " + entry.recipient();
+            graphics.drawString(font, person, left + 12, y + 6, TEXT, false);
+            graphics.drawString(font, entry.subject().isBlank() ? "Sem assunto" : entry.subject(), left + 12, y + 20, MUTED, false);
+            graphics.drawString(font, displayStatus(entry.status().name()), right - 76, y + 13, GOLD, false);
+            y += 44;
+        }
+    }
+
+    private String displayStatus(String status) {
+        return switch (status) {
+            case "READ" -> "LIDA";
+            case "DELIVERED" -> "NOVA";
+            case "IN_TRANSIT" -> "A CAMINHO";
+            default -> status;
+        };
     }
 
     private void drawCorners(GuiGraphics graphics, int left, int top, int right, int bottom) {
