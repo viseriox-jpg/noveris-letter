@@ -31,6 +31,7 @@ public final class MailNetwork {
     }
 
     private static void sendSnapshot(ServerPlayer player, int tab) {
+        DeliveryManager.processFor(player.server, player);
         MailService service = new MailService(player.server, new CourierAppearanceRegistry(), 1500, 120);
         var letters = tab == 1 ? service.sent(player) : service.inbox(player);
         var entries = letters.stream().map(letter -> new MailSnapshotPayload.Entry(letter.id(), letter.senderName(), letter.recipientName(), letter.subject(), letter.status(), letter.sentAt())).toList();
