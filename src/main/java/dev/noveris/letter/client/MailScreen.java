@@ -36,7 +36,6 @@ public final class MailScreen extends Screen {
     }
 
     @Override protected void init() {
-        tab = initialTab;
         int left = panelLeft();
         int width = panelWidth();
         for (int i = 0; i < TABS.length; i++) {
@@ -45,6 +44,11 @@ public final class MailScreen extends Screen {
                     .bounds(left + 12 + i * ((width - 24) / 4), top() + 42, (width - 24) / 4 - 4, 24).build());
         }
         if (tab == 2) createComposeFields(left, width);
+    }
+
+    /** Keep the world crisp; Screen#render calls this hook before drawing widgets. */
+    @Override protected void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        // Intentionally empty: the world rendered by Minecraft remains visible without blur.
     }
 
     private void createComposeFields(int left, int width) {
