@@ -20,6 +20,7 @@ public final class NoverisLetter {
         NeoForge.EVENT_BUS.addListener(NoverisLetter::registerCommands);
         NeoForge.EVENT_BUS.addListener(DeliveryManager::tick);
         NeoForge.EVENT_BUS.addListener(DeliveryManager::playerTick);
+        NeoForge.EVENT_BUS.addListener(DeliveryManager::playerLoggedIn);
         modBus.addListener(NoverisLetter::registerPayloads);
     }
 
