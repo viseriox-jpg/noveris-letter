@@ -9,6 +9,7 @@ public record MailLetter(
         String senderName,
         UUID recipientId,
         String recipientName,
+        String subject,
         String content,
         long createdAt,
         long sentAt,
@@ -22,22 +23,23 @@ public record MailLetter(
         Objects.requireNonNull(senderName, "senderName");
         Objects.requireNonNull(recipientId, "recipientId");
         Objects.requireNonNull(recipientName, "recipientName");
+        Objects.requireNonNull(subject, "subject");
         Objects.requireNonNull(content, "content");
         Objects.requireNonNull(status, "status");
     }
 
     public MailLetter withStatus(MailStatus newStatus) {
-        return new MailLetter(id, senderId, senderName, recipientId, recipientName, content,
+        return new MailLetter(id, senderId, senderName, recipientId, recipientName, subject, content,
                 createdAt, sentAt, deliveredAt, readAt, newStatus);
     }
 
     public MailLetter delivered(long timestamp) {
-        return new MailLetter(id, senderId, senderName, recipientId, recipientName, content,
+        return new MailLetter(id, senderId, senderName, recipientId, recipientName, subject, content,
                 createdAt, sentAt, timestamp, readAt, MailStatus.DELIVERED);
     }
 
     public MailLetter read(long timestamp) {
-        return new MailLetter(id, senderId, senderName, recipientId, recipientName, content,
+        return new MailLetter(id, senderId, senderName, recipientId, recipientName, subject, content,
                 createdAt, sentAt, deliveredAt, timestamp, MailStatus.READ);
     }
 }
