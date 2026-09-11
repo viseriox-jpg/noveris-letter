@@ -32,3 +32,5 @@ Requer Java 21 e acesso aos repositórios Maven do NeoForge. Execute `./gradlew 
 ## Comandos planejados
 
 `/correio` abrirá a interface postal e `/correio escrever` iniciará uma carta. Os comandos vanilla `/tell`, `/msg` e `/w` não são substituídos por padrão.
+
+<!-- Build trigger: 2026-09-11 -->
