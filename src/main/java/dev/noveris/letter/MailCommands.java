@@ -25,7 +25,7 @@ public final class MailCommands {
     }
 
     private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("correio")
+        var root = Commands.literal("correio")
                 .executes(context -> open(context.getSource(), 0))
                 .then(Commands.literal("escrever")
                         .executes(context -> open(context.getSource(), 2)))
@@ -41,12 +41,16 @@ public final class MailCommands {
                                         .executes(context -> send(context, false)))
                                 .then(Commands.literal("anonimo")
                                         .then(Commands.argument("mensagem", StringArgumentType.greedyString())
-                                                .executes(context -> send(context, true)))))
-                .then(Commands.literal("historico")
-                        .then(Commands.literal("apagar")
-                                .requires(source -> source.hasPermission(2))
-                                .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
-                                        .executes(MailCommands::clearHistory)))));
+                                                .executes(context -> send(context, true))))));
+
+        var historico = Commands.literal("historico")
+                .then(Commands.literal("apagar")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
+                                .executes(MailCommands::clearHistory)));
+
+        root.then(historico);
+        dispatcher.register(root);
     }
 
     private static int open(CommandSourceStack source, int tab) {
