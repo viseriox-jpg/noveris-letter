@@ -101,10 +101,11 @@ public final class MailCommands {
             context.getSource().sendFailure(Component.literal("Não foi possível enviar a correspondência."));
             return 0;
         }
+        final int totalSent = sent;
         context.getSource().sendSuccess(() -> Component.literal(
                 anonymous
-                        ? "Correspondência anônima enviada para " + sent + " jogador(es)."
-                        : "Correspondência enviada para " + sent + " jogador(es)."), false);
+                        ? "Correspondência anônima enviada para " + totalSent + " jogador(es)."
+                        : "Correspondência enviada para " + totalSent + " jogador(es)."), false);
         return sent;
     }
 
