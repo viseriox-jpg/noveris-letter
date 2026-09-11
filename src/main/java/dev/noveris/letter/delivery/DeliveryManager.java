@@ -9,6 +9,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
@@ -22,17 +23,15 @@ public final class DeliveryManager {
     public static void tick(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
         if (server.getTickCount() % TICK_INTERVAL != 0) return;
-
-        // Process by recipient instead of taking the first global queue entry.
-        // A queued letter for an offline/full-inventory player must not prevent
-        // other online recipients from receiving their mail.
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             processFor(server, player);
         }
     }
 
     public static void playerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) processFor(player.server, player);
+        if (event.getEntity() instanceof ServerPlayer player) {
+            processFor(player.server, player);
+        }
     }
 
     public static void processFor(MinecraftServer server, ServerPlayer recipient) {
@@ -57,10 +56,12 @@ public final class DeliveryManager {
             return true;
         }
 
-        if (!recipient.getInventory().add(LetterBookFactory.create(letter))) {
-            recipient.displayClientMessage(
-                    Component.literal("O mensageiro hesita — não há espaço para a correspondência."), true);
-            return false;
+        ItemStack book = LetterBookFactory.create(letter);
+        boolean stored = recipient.getInventory().add(book);
+        if (!stored) {
+            // A full inventory must not leave the letter permanently in transit.
+            // Drop the sealed book at the recipient's feet and finish delivery.
+            recipient.drop(book, false);
         }
 
         if (service.markDelivered(letter.id(), System.currentTimeMillis())) {
@@ -68,7 +69,9 @@ public final class DeliveryManager {
             data.markChanged();
             recipient.playNotifySound(SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 0.8F, 0.9F);
             recipient.displayClientMessage(
-                    Component.literal("Uma correspondência selada foi confiada às suas mãos."), true);
+                    Component.literal(stored
+                            ? "Uma correspondência selada foi confiada às suas mãos."
+                            : "Uma correspondência chegou — sua mochila estava cheia e o livro foi deixado aos seus pés."), true);
             return true;
         }
         return false;
