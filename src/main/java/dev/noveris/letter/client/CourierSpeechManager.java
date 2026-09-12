@@ -51,9 +51,11 @@ public final class CourierSpeechManager {
         float scale = 0.025F;
         float y = entity.getBbHeight() + 0.62F;
         int opacity = (int) (alpha(entity.getId()) * 255.0F) & 0xFF;
-        int textColor = (opacity << 24) | 0xF2D27A;
-        int backgroundOpacity = (int) (opacity * 0.88F) & 0xFF;
-        int background = (backgroundOpacity << 24) | 0x17140F;
+
+        // White lettering for clear readability, with a softer warm translucent backdrop.
+        int textColor = (opacity << 24) | 0xFFFFFF;
+        int backgroundOpacity = (int) (opacity * 0.72F) & 0xFF;
+        int background = (backgroundOpacity << 24) | 0x2A261F;
 
         poseStack.pushPose();
         poseStack.translate(0.0D, y, 0.0D);
