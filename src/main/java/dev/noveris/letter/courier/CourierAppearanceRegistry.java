@@ -18,7 +18,6 @@ public final class CourierAppearanceRegistry {
     public static final ResourceLocation PUMPKIN_ID = ResourceLocation.fromNamespaceAndPath(NoverisLetter.MOD_ID, "pumpkin_critter");
     public static final ResourceLocation POTATO_ID = ResourceLocation.fromNamespaceAndPath(NoverisLetter.MOD_ID, "potato_critter");
     public static final ResourceLocation SPARROW_ID = ResourceLocation.fromNamespaceAndPath(NoverisLetter.MOD_ID, "sparrow");
-    public static final ResourceLocation BARN_OWL_ID = ResourceLocation.fromNamespaceAndPath(NoverisLetter.MOD_ID, "barn_owl");
 
     private final Map<ResourceLocation, CourierAppearance> appearances = new LinkedHashMap<>();
 
@@ -30,9 +29,6 @@ public final class CourierAppearanceRegistry {
         register(crop(POTATO_ID, "Batatin", "potato_critter.png", CourierRarity.RARE));
         register(new CourierAppearance(SPARROW_ID, Component.literal("Pardal"), SPARROW_ID,
                 tex("sparrowfly.png"), tex("sparrowfly.png"), CourierRarity.COMMON,
-                CourierMovementStyle.FLYING, true, false, 0, "legacy"));
-        register(new CourierAppearance(BARN_OWL_ID, Component.literal("Coruja-das-torres"), BARN_OWL_ID,
-                tex("barnowlfly.png"), tex("barnowlfly.png"), CourierRarity.RARE,
                 CourierMovementStyle.FLYING, true, false, 0, "legacy"));
     }
 
