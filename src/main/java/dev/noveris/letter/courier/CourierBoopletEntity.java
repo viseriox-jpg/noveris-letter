@@ -22,7 +22,7 @@ public final class CourierBoopletEntity extends Animal implements CourierBirdEnt
     public final AnimationState boopAnimationState = new AnimationState();
     public final AnimationState swimAnimationState = new AnimationState();
     private final CourierState courierState = new CourierState(this);
-    public CourierBoopletEntity(EntityType<? extends Animal> type, Level level) { super(type, level); setNoGravity(true); }
+    public CourierBoopletEntity(EntityType<? extends Animal> type, Level level) { super(type, level); }
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) { super.defineSynchedData(b); b.define(COURIER_APPEARANCE, CourierAppearanceRegistry.BOOPLET_ID.toString()); }
     public boolean isFleeing() { return false; }
     public boolean isFluffy() { return false; }
