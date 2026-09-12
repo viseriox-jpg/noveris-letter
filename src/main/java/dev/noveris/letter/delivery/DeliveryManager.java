@@ -81,8 +81,7 @@ public final class DeliveryManager {
     }
 
     private static CourierEntity createCourier(ServerLevel level, ResourceLocation appearanceId) {
-        if (appearanceId.equals(CourierAppearanceRegistry.SPARROW_ID)
-                || appearanceId.equals(CourierAppearanceRegistry.BARN_OWL_ID)) {
+        if (appearanceId.equals(CourierAppearanceRegistry.SPARROW_ID)) {
             return CourierEntities.COURIER_LEGACY_BIRD.get().create(level);
         }
         if (appearanceId.equals(CourierAppearanceRegistry.MELON_ID)
@@ -100,8 +99,7 @@ public final class DeliveryManager {
         double distance = 28.0D + recipient.getRandom().nextDouble() * 6.0D;
         int x = (int) Math.floor(recipient.getX() + Math.cos(angle) * distance);
         int z = (int) Math.floor(recipient.getZ() + Math.sin(angle) * distance);
-        boolean flying = appearanceId.equals(CourierAppearanceRegistry.SPARROW_ID)
-                || appearanceId.equals(CourierAppearanceRegistry.BARN_OWL_ID);
+        boolean flying = appearanceId.equals(CourierAppearanceRegistry.SPARROW_ID);
 
         if (flying) {
             return new Vec3(x + 0.5D, recipient.getY() + 4.0D + recipient.getRandom().nextDouble() * 2.0D, z + 0.5D);
