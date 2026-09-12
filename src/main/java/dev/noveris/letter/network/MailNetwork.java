@@ -21,18 +21,20 @@ public final class MailNetwork {
         registrar.playToServer(SendLetterPayload.TYPE, SendLetterPayload.STREAM_CODEC, MailNetwork::handleSend);
         registrar.playToServer(RequestMailSnapshotPayload.TYPE, RequestMailSnapshotPayload.STREAM_CODEC, MailNetwork::handleSnapshotRequest);
         registrar.playToServer(SelectCourierPayload.TYPE, SelectCourierPayload.STREAM_CODEC, MailNetwork::handleSelectCourier);
-        registrar.playToClient(CourierSpeechPayload.TYPE, CourierSpeechPayload.STREAM_CODEC, MailNetwork::handleCourierSpeech);
+    }
+
+    public static void sendCourierSpeech(ServerPlayer recipient, CourierSpeechPayload payload) {
+        PacketDistributor.sendToPlayer(recipient, payload);
+    }
+
+    public static void sendCourierSpeechToTracking(net.minecraft.world.entity.Entity courier, CourierSpeechPayload payload) {
+        PacketDistributor.sendToPlayersTrackingEntity(courier, payload);
     }
 
     public static void open(ServerPlayer player, int tab) {
         int safeTab = Math.max(0, Math.min(3, tab));
         PacketDistributor.sendToPlayer(player, new OpenMailScreenPayload(safeTab));
         sendSnapshot(player, safeTab, 0);
-    }
-
-    private static void handleCourierSpeech(CourierSpeechPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> dev.noveris.letter.client.CourierSpeechManager.show(
-                payload.entityId(), payload.message(), payload.durationTicks()));
     }
 
     private static void handleSnapshotRequest(RequestMailSnapshotPayload payload, IPayloadContext context) {
