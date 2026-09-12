@@ -23,11 +23,11 @@ public final class CourierAppearanceRegistry {
     private final Map<ResourceLocation, CourierAppearance> appearances = new LinkedHashMap<>();
 
     public CourierAppearanceRegistry() {
-        register(crop(MELON_ID, "Melon Critter", "melon_critter.png", CourierRarity.COMMON));
-        register(crop(CARROT_ID, "Carrot Critter", "carrot_critter.png", CourierRarity.COMMON));
-        register(crop(WHEAT_ID, "Wheat Critter", "wheat_critter.png", CourierRarity.COMMON));
-        register(crop(PUMPKIN_ID, "Pumpkin Critter", "pumpkin_critter.png", CourierRarity.RARE));
-        register(crop(POTATO_ID, "Potato Critter", "potato_critter.png", CourierRarity.RARE));
+        register(crop(MELON_ID, "Melito", "melon_critter.png", CourierRarity.COMMON));
+        register(crop(CARROT_ID, "Cenourito", "carrot_critter.png", CourierRarity.COMMON));
+        register(crop(WHEAT_ID, "Tiquinho", "wheat_critter.png", CourierRarity.COMMON));
+        register(crop(PUMPKIN_ID, "Abobito", "pumpkin_critter.png", CourierRarity.RARE));
+        register(crop(POTATO_ID, "Batatin", "potato_critter.png", CourierRarity.RARE));
         register(new CourierAppearance(SPARROW_ID, Component.literal("Pardal"), SPARROW_ID,
                 tex("sparrowfly.png"), tex("sparrowfly.png"), CourierRarity.COMMON,
                 CourierMovementStyle.FLYING, true, false, 0, "legacy"));
