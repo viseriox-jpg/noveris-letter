@@ -4,9 +4,12 @@ import dev.noveris.letter.book.LetterBookFactory;
 import dev.noveris.letter.courier.CourierAppearanceRegistry;
 import dev.noveris.letter.courier.CourierEntities;
 import dev.noveris.letter.courier.CourierEntity;
+import dev.noveris.letter.courier.CourierSpeech;
 import dev.noveris.letter.mail.MailLetter;
 import dev.noveris.letter.mail.MailSavedData;
 import dev.noveris.letter.mail.MailService;
+import dev.noveris.letter.network.CourierSpeechPayload;
+import dev.noveris.letter.network.MailNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -29,6 +32,7 @@ public final class DeliveryManager {
     private static final int TICK_INTERVAL = 20;
     private static final int MAX_DELIVERIES_PER_PLAYER = 4;
     private static final long RETRY_DELAY_MS = 1000L;
+    private static final int COURIER_SPEECH_TICKS = 60;
     private static final Map<UUID, UUID> ACTIVE_COURIERS = new HashMap<>();
 
     private DeliveryManager() { }
@@ -156,6 +160,10 @@ public final class DeliveryManager {
             recipient.displayClientMessage(Component.literal(stored
                     ? "O mensageiro entregou uma correspondência selada em suas mãos."
                     : "O mensageiro deixou a correspondência aos seus pés porque sua mochila estava cheia."), true);
+
+            String speech = CourierSpeech.randomFor(courier.getAppearanceId());
+            MailNetwork.sendCourierSpeechToTracking(courier.entity(),
+                    new CourierSpeechPayload(courier.entity().getId(), speech, COURIER_SPEECH_TICKS));
         }
 
         clearActive(letter.id());
