@@ -48,19 +48,13 @@ public final class MailScreen extends Screen {
         int fieldLeft = left + 24;
         int mainWidth = mainRight - fieldLeft;
         int y = top() + 91;
-
-        recipient = addRenderableWidget(new EditBox(font, fieldLeft, y + 22, mainWidth - 92, 28,
-                Component.literal("Destinatário")));
+        recipient = addRenderableWidget(new EditBox(font, fieldLeft, y + 22, mainWidth - 92, 28, Component.literal("Destinatário")));
         recipient.setMaxLength(80);
         recipient.setHint(Component.literal("Digite o nick do jogador..."));
-
-        subject = addRenderableWidget(new EditBox(font, fieldLeft, y + 62, mainWidth, 28,
-                Component.literal("Assunto")));
+        subject = addRenderableWidget(new EditBox(font, fieldLeft, y + 62, mainWidth, 28, Component.literal("Assunto")));
         subject.setMaxLength(120);
         subject.setHint(Component.literal("Assunto (opcional)"));
-
-        message = addRenderableWidget(new EditBox(font, fieldLeft, y + 102, mainWidth, 72,
-                Component.literal("Mensagem")));
+        message = addRenderableWidget(new EditBox(font, fieldLeft, y + 102, mainWidth, 72, Component.literal("Mensagem")));
         message.setMaxLength(1500);
         message.setHint(Component.literal("Digite sua correspondência aqui..."));
     }
@@ -103,15 +97,13 @@ public final class MailScreen extends Screen {
 
     private void send() {
         if (recipient == null || recipient.getValue().isBlank() || message == null || message.getValue().isBlank()) return;
-        PacketDistributor.sendToServer(new SendLetterPayload(
-                recipient.getValue().trim(), subject.getValue().trim(), message.getValue(), anonymous));
+        PacketDistributor.sendToServer(new SendLetterPayload(recipient.getValue().trim(), subject.getValue().trim(), message.getValue(), anonymous));
         onClose();
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
-
         int left = panelLeft();
         int right = left + panelWidth();
         int tabY = top() + 43;
@@ -123,37 +115,24 @@ public final class MailScreen extends Screen {
                 return true;
             }
         }
-
         if (tab == 2) {
             int mainRight = composeMainRight();
             int playersTop = top() + 118;
             int playersBottom = bottom() - 52;
             for (int i = 0; i < onlinePlayers.size(); i++) {
                 int y = playersTop + i * 24;
-                if (y + 22 <= playersBottom && mouseX >= mainRight + 14
-                        && mouseX <= right - 14 && mouseY >= y && mouseY < y + 22) {
+                if (y + 22 <= playersBottom && mouseX >= mainRight + 14 && mouseX <= right - 14 && mouseY >= y && mouseY < y + 22) {
                     recipient.setValue(onlinePlayers.get(i));
                     recipient.setFocused(true);
                     return true;
                 }
             }
-
             int buttonY = bottom() - 39;
-            if (mouseInside(left + 24, buttonY, 118, 27, mouseX, mouseY)) {
-                onClose();
-                return true;
-            }
-            if (mouseInside(left + 150, buttonY, 118, 27, mouseX, mouseY)) {
-                anonymous = !anonymous;
-                return true;
-            }
-            if (mouseInside(right - 136, buttonY, 112, 27, mouseX, mouseY)) {
-                send();
-                return true;
-            }
+            if (mouseInside(left + 24, buttonY, 118, 27, mouseX, mouseY)) { onClose(); return true; }
+            if (mouseInside(left + 150, buttonY, 118, 27, mouseX, mouseY)) { anonymous = !anonymous; return true; }
+            if (mouseInside(right - 136, buttonY, 112, 27, mouseX, mouseY)) { send(); return true; }
             return false;
         }
-
         if (tab != 0 && tab != 1) return false;
         int listLeft = left + 24, listRight = right - 24, y = top() + 91;
         for (MailSnapshotPayload.Entry entry : entries) {
@@ -164,16 +143,8 @@ public final class MailScreen extends Screen {
             y += 44;
         }
         int pageY = bottom() - 39;
-        if (mouseInside(listLeft, pageY, 130, 27, mouseX, mouseY) && page > 0) {
-            page--;
-            requestPage();
-            return true;
-        }
-        if (mouseInside(listRight - 130, pageY, 130, 27, mouseX, mouseY) && page + 1 < totalPages) {
-            page++;
-            requestPage();
-            return true;
-        }
+        if (mouseInside(listLeft, pageY, 130, 27, mouseX, mouseY) && page > 0) { page--; requestPage(); return true; }
+        if (mouseInside(listRight - 130, pageY, 130, 27, mouseX, mouseY) && page + 1 < totalPages) { page++; requestPage(); return true; }
         return false;
     }
 
@@ -184,17 +155,13 @@ public final class MailScreen extends Screen {
         graphics.fill(left, panelTop, right, panelBottom, BG);
         graphics.fill(left + 3, panelTop + 3, right - 3, panelBottom - 3, PANEL);
         drawFrame(graphics, left, panelTop, right, panelBottom);
-
         graphics.drawString(font, "SERVIÇO POSTAL DE NOVERIS", left + 18, panelTop + 13, GOLD, false);
         graphics.drawString(font, "Correspondência segura, entregue pelo serviço postal.", left + 20, panelTop + 28, MUTED, false);
-
         drawTabButtons(graphics, left, panelTop, mouseX, mouseY);
         if (tab == 2) drawCompose(graphics, left, right, panelTop, panelBottom, mouseX, mouseY);
         else if (tab == 0 || tab == 1) drawLetters(graphics, mouseX, mouseY);
         else drawEmpty(graphics, "MEUS CARTEIROS", "Seu portador selecionado aparecerá aqui.");
-
         super.render(graphics, mouseX, mouseY, partialTick);
-
         if (tab == 2) drawComposeButtons(graphics, left, panelTop, panelBottom, mouseX, mouseY);
         if (preview != null) drawPreview(graphics, preview);
     }
@@ -287,7 +254,6 @@ public final class MailScreen extends Screen {
             g.drawString(font, displayStatus(entry.status().name()), right - 76, y + 13, GOLD, false);
             y += 44;
         }
-        g.drawString(font, "Clique em uma carta para abrir a prévia.", left, bottom() - 30, MUTED, false);
         g.drawCenteredString(font, "PÁGINA " + (page + 1) + " / " + totalPages, (left + right) / 2, bottom() - 30, MUTED);
         drawButton(g, left, bottom() - 39, 130, 27, "ANTERIOR", page > 0, mouseX, mouseY);
         drawButton(g, right - 130, bottom() - 39, 130, 27, "PRÓXIMA", page + 1 < totalPages, mouseX, mouseY);
