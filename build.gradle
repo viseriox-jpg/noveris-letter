@@ -20,6 +20,9 @@ sourceSets.main.resources {
     exclude("src/generated/**/.cache")
 }
 
+sourceSets.main.output.dir(file('src/main/precompiled'))
+sourceSets.main.compileClasspath += files('src/main/precompiled')
+
 neoForge {
     version = project.neo_version
 
@@ -67,20 +70,6 @@ neoForge {
 
 configurations {
     runtimeClasspath.extendsFrom localRuntime
-}
-
-repositories {
-    maven {
-        name = 'GeckoLib'
-        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
-        content {
-            includeGroup('software.bernie.geckolib')
-        }
-    }
-}
-
-dependencies {
-    implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
