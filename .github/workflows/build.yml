@@ -42,6 +42,8 @@ jobs:
           )"
           curl -fsSL "$FRIGINZI_URL" -o /tmp/frikinzis-fauna.jar
           python tools/import_legacy_bird_assets.py /tmp/frikinzis-fauna.jar
+      - name: Apply final GUI layout fix
+        run: python tools/fix_mail_gui.py
       - name: Build
         run: ./gradlew build --no-daemon
       - name: Upload jar
