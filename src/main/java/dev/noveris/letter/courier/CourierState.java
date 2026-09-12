@@ -14,6 +14,7 @@ public final class CourierState {
     private static final double WALK_SPEED = 1.05D;
     private static final double ARRIVAL_DISTANCE = 2.5D;
     private static final double DEPARTURE_SPEED = 1.15D;
+    private static final int DEPARTURE_WAIT_TICKS = 100;
     private static final int DEPARTURE_TICKS = 100;
 
     private final Entity owner;
@@ -21,7 +22,9 @@ public final class CourierState {
     private UUID recipientId;
     private ResourceLocation appearanceId = CourierAppearanceRegistry.DEFAULT_ID;
     private int lostTargetTicks;
+    private int departureWaitTicks;
     private int departureTicks;
+    private boolean departureWaiting;
     private boolean departing;
     private boolean deliveryFinished;
     private Vec3 departureTarget = Vec3.ZERO;
@@ -36,7 +39,9 @@ public final class CourierState {
         this.recipientId = recipientId;
         this.appearanceId = appearance;
         lostTargetTicks = 0;
+        departureWaitTicks = 0;
         departureTicks = 0;
+        departureWaiting = false;
         departing = false;
         deliveryFinished = false;
         departureTarget = Vec3.ZERO;
@@ -48,15 +53,20 @@ public final class CourierState {
             owner.remove(Entity.RemovalReason.DISCARDED);
             return;
         }
+
         Vec3 away = owner.position().subtract(recipient.getX(), owner.getY(), recipient.getZ());
         Vec3 horizontal = new Vec3(away.x, 0.0D, away.z);
         if (horizontal.lengthSqr() < 0.01D) horizontal = new Vec3(1.0D, 0.0D, 0.0D);
+
+        // Stay beside the player for about five seconds before turning around and leaving.
         departureTarget = owner.position().add(horizontal.normalize().scale(26.0D));
-        departing = true;
+        departureWaiting = true;
+        departureWaitTicks = 0;
+        departing = false;
         deliveryFinished = true;
         departureTicks = 0;
-        faceTowards(departureTarget);
-        mob.getNavigation().moveTo(departureTarget.x, departureTarget.y, departureTarget.z, DEPARTURE_SPEED);
+        mob.getNavigation().stop();
+        faceTowards(recipient.position());
     }
 
     public void tick() {
@@ -64,6 +74,26 @@ public final class CourierState {
         if (owner.level().isClientSide()) return;
         if (!(owner instanceof Mob mob)) {
             owner.remove(Entity.RemovalReason.DISCARDED);
+            return;
+        }
+
+        if (departureWaiting) {
+            ServerPlayer target = owner.level().getServer() == null
+                    ? null
+                    : owner.level().getServer().getPlayerList().getPlayer(recipientId);
+            mob.getNavigation().stop();
+            if (target != null && !target.isRemoved() && !target.isSpectator()) {
+                faceTowards(target.position());
+            }
+
+            departureWaitTicks++;
+            if (departureWaitTicks >= DEPARTURE_WAIT_TICKS) {
+                departureWaiting = false;
+                departing = true;
+                departureTicks = 0;
+                faceTowards(departureTarget);
+                mob.getNavigation().moveTo(departureTarget.x, departureTarget.y, departureTarget.z, DEPARTURE_SPEED);
+            }
             return;
         }
 
@@ -119,6 +149,7 @@ public final class CourierState {
         tag.putString("courier_appearance", appearanceId.toString());
         if (letterId != null) tag.putUUID("courier_letter", letterId);
         if (recipientId != null) tag.putUUID("courier_recipient", recipientId);
+        tag.putBoolean("courier_departure_waiting", departureWaiting);
         tag.putBoolean("courier_departing", departing);
     }
 
@@ -127,7 +158,8 @@ public final class CourierState {
         if (!appearance.isBlank()) appearanceId = ResourceLocation.parse(appearance);
         if (tag.hasUUID("courier_letter")) letterId = tag.getUUID("courier_letter");
         if (tag.hasUUID("courier_recipient")) recipientId = tag.getUUID("courier_recipient");
+        departureWaiting = tag.getBoolean("courier_departure_waiting");
         departing = tag.getBoolean("courier_departing");
-        deliveryFinished = departing;
+        deliveryFinished = departureWaiting || departing;
     }
 }
