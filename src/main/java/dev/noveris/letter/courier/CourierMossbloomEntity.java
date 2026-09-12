@@ -26,7 +26,7 @@ public final class CourierMossbloomEntity extends TamableAnimal implements Couri
     public final AnimationState earTwitchAnimationStateBE = new AnimationState();
     public final AnimationState wagTailAnimationStateBE = new AnimationState();
     private final CourierState courierState = new CourierState(this);
-    public CourierMossbloomEntity(EntityType<? extends TamableAnimal> type, Level level) { super(type, level); setNoGravity(true); }
+    public CourierMossbloomEntity(EntityType<? extends TamableAnimal> type, Level level) { super(type, level); }
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) { super.defineSynchedData(b); b.define(COURIER_APPEARANCE, CourierAppearanceRegistry.MOSSBLOOM_ID.toString()); }
     public boolean isFleeing() { return false; }
     public boolean getSprinting() { return false; }
