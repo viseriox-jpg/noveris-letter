@@ -7,6 +7,7 @@ import dev.noveris.letter.courier.CourierEntities;
 import dev.noveris.letter.mail.MailLetter;
 import dev.noveris.letter.mail.MailSavedData;
 import dev.noveris.letter.mail.MailService;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -14,7 +15,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -66,7 +69,7 @@ public final class DeliveryManager {
         CourierBirdEntity courier = createCourier(level, appearance.id());
         if (courier == null) return false;
 
-        Vec3 spawn = findSpawnPosition(recipient);
+        Vec3 spawn = findSpawnPosition(level, recipient);
         courier.entity().setPos(spawn.x, spawn.y, spawn.z);
         courier.configure(letter.id(), recipient.getUUID(), appearance.id());
         if (!level.addFreshEntity(courier.entity())) return false;
@@ -86,11 +89,22 @@ public final class DeliveryManager {
         return CourierEntities.COURIER_MOSSBLOOM.get().create(level);
     }
 
-    private static Vec3 findSpawnPosition(ServerPlayer recipient) {
-        double angle = recipient.getRandom().nextDouble() * Math.PI * 2.0D;
-        double distance = 72.0D + recipient.getRandom().nextDouble() * 18.0D;
-        double height = 8.0D + recipient.getRandom().nextDouble() * 4.0D;
-        return new Vec3(recipient.getX() + Math.cos(angle) * distance, recipient.getY() + height, recipient.getZ() + Math.sin(angle) * distance);
+    private static Vec3 findSpawnPosition(ServerLevel level, ServerPlayer recipient) {
+        for (int attempt = 0; attempt < 12; attempt++) {
+            double angle = recipient.getRandom().nextDouble() * Math.PI * 2.0D;
+            double distance = 72.0D + recipient.getRandom().nextDouble() * 18.0D;
+            int x = (int) Math.floor(recipient.getX() + Math.cos(angle) * distance);
+            int z = (int) Math.floor(recipient.getZ() + Math.sin(angle) * distance);
+            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            BlockPos ground = new BlockPos(x, y, z);
+            if (level.getBlockState(ground).isAir() && level.getBlockState(ground.below()).isSolid()) {
+                return new Vec3(x + 0.5D, y, z + 0.5D);
+            }
+        }
+        int x = (int) Math.floor(recipient.getX() + 80.0D);
+        int z = (int) Math.floor(recipient.getZ());
+        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+        return new Vec3(x + 0.5D, y, z + 0.5D);
     }
 
     public static void finishCourierDelivery(CourierBirdEntity courier, ServerPlayer recipient) {
