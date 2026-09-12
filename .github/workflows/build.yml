@@ -18,18 +18,29 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Import Clutter Bestiary courier models and textures
+      - name: Import exact Crop Critters courier models and animations
         shell: bash
         run: |
           set -euo pipefail
-          CLUTTER_URL="$(python - <<'PY'
+          CROP_URL="$(python - <<'PY'
           import json, urllib.request
-          version = json.load(urllib.request.urlopen('https://api.modrinth.com/v2/version/L8JTSQfM'))
-          print(next(item['url'] for item in version['files'] if item.get('primary')))
+          expected_sha = '503fe2da6f6184bb99cd2bc0952a87d6632b8a9168ce621016c5c0912c8f02cb'
+          versions = json.load(urllib.request.urlopen('https://api.modrinth.com/v2/project/crop-critters/version'))
+          for version in versions:
+              if version.get('version_number') != '1.5.0':
+                  continue
+              if '1.21.1' not in version.get('game_versions', []) or 'neoforge' not in version.get('loaders', []):
+                  continue
+              for file in version.get('files', []):
+                  if file.get('hashes', {}).get('sha256') == expected_sha:
+                      print(file['url'])
+                      raise SystemExit
+          raise SystemExit('Could not find the exact uploaded Crop Critters 1.5.0 NeoForge 1.21.1 artifact by SHA-256')
           PY
           )"
-          curl -fsSL "$CLUTTER_URL" -o /tmp/clutterbestiary.jar
-          python tools/import_clutter_courier_assets.py /tmp/clutterbestiary.jar
+          curl -fsSL "$CROP_URL" -o /tmp/cropcritters.jar
+          echo "503fe2da6f6184bb99cd2bc0952a87d6632b8a9168ce621016c5c0912c8f02cb  /tmp/cropcritters.jar" | sha256sum -c -
+          python tools/import_crop_critter_courier_assets.py /tmp/cropcritters.jar
       - name: Import preserved Sparrow and Barn Owl assets
         shell: bash
         run: |
