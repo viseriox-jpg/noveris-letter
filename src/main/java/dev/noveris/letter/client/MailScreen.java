@@ -17,17 +17,11 @@ import java.util.List;
 
 /** Noveris postal panel. Presentation only; server owns all postal state. */
 public final class MailScreen extends Screen {
-    private static final int BG = 0xEA0D0C09;
-    private static final int PANEL = 0xFF17140E;
-    private static final int FIELD = 0xFF080807;
-    private static final int GOLD = 0xFFFFD84D;
-    private static final int ACTIVE = 0xFFD6A800;
-    private static final int TEXT = 0xFFFFFBEB;
-    private static final int MUTED = 0xFFC9BE9B;
-    private static final int DIM = 0xFF77705D;
+    private static final int BG = 0xEA0D0C09, PANEL = 0xFF17140E, FIELD = 0xFF080807;
+    private static final int GOLD = 0xFFFFD84D, ACTIVE = 0xFFD6A800, TEXT = 0xFFFFFBEB;
+    private static final int MUTED = 0xFFC9BE9B, DIM = 0xFF77705D;
     private static final String[] TABS = {"RECEBIDAS", "ENVIADAS", "ESCREVER", "CARTEIRO"};
 
-    private final int initialTab;
     private int tab, page, totalPages = 1;
     private boolean anonymous;
     private EditBox recipient, subject, message;
@@ -37,20 +31,18 @@ public final class MailScreen extends Screen {
 
     public MailScreen(int tab) {
         super(Component.literal("Serviço Postal de Noveris"));
-        this.initialTab = Math.max(0, Math.min(3, tab));
-        this.tab = initialTab;
+        this.tab = Math.max(0, Math.min(3, tab));
     }
 
     @Override
     protected void init() {
-        int left = panelLeft(), width = panelWidth();
-        int tabW = (width - 42) / 4;
+        int left = panelLeft(), w = panelWidth(), tabW = (w - 42) / 4;
         for (int i = 0; i < TABS.length; i++) {
             int index = i;
-            addRenderableWidget(Button.builder(Component.literal(TABS[i]), button -> selectTab(index))
+            addRenderableWidget(Button.builder(Component.literal(TABS[i]), b -> selectTab(index))
                     .bounds(left + 12 + i * (tabW + 6), top() + 43, tabW, 28).build());
         }
-        if (tab == 2) createComposeFields(left, width);
+        if (tab == 2) createComposeFields(left, w);
         refreshOnlinePlayers();
     }
 
@@ -77,27 +69,26 @@ public final class MailScreen extends Screen {
         message.setMaxLength(1500);
         message.setHint(Component.literal("Digite sua correspondência aqui..."));
 
-        addRenderableWidget(Button.builder(Component.literal("CANCELAR"), button -> onClose())
+        addRenderableWidget(Button.builder(Component.literal("CANCELAR"), b -> onClose())
                 .bounds(left + 24, bottom() - 39, 118, 27).build());
-        addRenderableWidget(Button.builder(Component.literal("ANÔNIMA"), button -> anonymous = !anonymous)
+        addRenderableWidget(Button.builder(Component.literal("ANÔNIMA"), b -> anonymous = !anonymous)
                 .bounds(left + 150, bottom() - 39, 118, 27).build());
-        addRenderableWidget(Button.builder(Component.literal("ENVIAR"), button -> send())
+        addRenderableWidget(Button.builder(Component.literal("ENVIAR"), b -> send())
                 .bounds(mainRight - 136, bottom() - 39, 112, 27).build());
     }
 
-    private int composeMainRight(int left, int width) {
-        return left + width - 278;
-    }
+    private int composeMainRight(int left, int width) { return left + width - 278; }
 
     private void refreshOnlinePlayers() {
-        if (Minecraft.getInstance().getConnection() == null) {
+        if (Minecraft.getInstance().getConnection() == null || Minecraft.getInstance().player == null) {
             onlinePlayers = List.of();
             return;
         }
         List<String> names = new ArrayList<>();
+        String self = Minecraft.getInstance().player.getGameProfile().getName();
         for (PlayerInfo info : Minecraft.getInstance().getConnection().getOnlinePlayers()) {
             String name = info.getProfile().getName();
-            if (!name.equals(Minecraft.getInstance().player.getGameProfile().getName())) names.add(name);
+            if (!name.equals(self)) names.add(name);
         }
         onlinePlayers = names;
     }
@@ -111,9 +102,7 @@ public final class MailScreen extends Screen {
         if (index == 0 || index == 1) requestPage();
     }
 
-    private void requestPage() {
-        PacketDistributor.sendToServer(new RequestMailSnapshotPayload(tab, page));
-    }
+    private void requestPage() { PacketDistributor.sendToServer(new RequestMailSnapshotPayload(tab, page)); }
 
     public void setSnapshot(MailSnapshotPayload payload) {
         if (payload.tab() == tab) {
@@ -137,24 +126,16 @@ public final class MailScreen extends Screen {
 
         if (tab == 2) {
             int left = panelLeft();
-            int right = composeMainRight(left, panelWidth());
-            int playersTop = top() + 116;
-            int rowH = 24;
+            int mainRight = composeMainRight(left, panelWidth());
+            int playersTop = top() + 118;
             for (int i = 0; i < onlinePlayers.size(); i++) {
-                int y = playersTop + i * rowH;
-                if (y + rowH <= bottom() - 74 && mouseX >= right + 14 && mouseX <= panelLeft() + panelWidth() - 14
-                        && mouseY >= y && mouseY < y + rowH) {
-                    if (recipient != null) {
-                        recipient.setValue(onlinePlayers.get(i));
-                        recipient.setFocused(true);
-                    }
+                int y = playersTop + i * 24;
+                if (y + 22 <= bottom() - 49 && mouseX >= mainRight + 14
+                        && mouseX <= panelLeft() + panelWidth() - 14 && mouseY >= y && mouseY < y + 22) {
+                    recipient.setValue(onlinePlayers.get(i));
+                    recipient.setFocused(true);
                     return true;
                 }
-            }
-            if (anonymous && mouseX >= left + 150 && mouseX <= left + 268
-                    && mouseY >= bottom() - 39 && mouseY <= bottom() - 12) {
-                anonymous = false;
-                return true;
             }
             return false;
         }
@@ -183,153 +164,132 @@ public final class MailScreen extends Screen {
         graphics.fill(left + 3, panelTop + 3, right - 3, panelBottom - 3, PANEL);
         drawFrame(graphics, left, panelTop, right, panelBottom);
 
-        graphics.drawString(font, "✉  SERVIÇO POSTAL DE NOVERIS", left + 18, panelTop + 14, GOLD, false);
-        graphics.drawString(font, "Correspondência segura, entregue pelo serviço postal.", left + 20, panelTop + 29, MUTED, false);
+        graphics.drawString(font, "✉  SERVIÇO POSTAL DE NOVERIS", left + 18, panelTop + 13, GOLD, false);
+        graphics.drawString(font, "Correspondência segura, entregue pelo serviço postal.", left + 20, panelTop + 28, MUTED, false);
 
-        if (tab == 2) drawCompose(graphics, left, right, panelTop, panelBottom);
-        else if (tab == 0 || tab == 1) drawLetters(graphics);
+        if (tab == 2) drawCompose(graphics, left, right, panelTop, panelBottom, mouseX, mouseY);
+        else if (tab == 0 || tab == 1) drawLetters(graphics, mouseX, mouseY);
         else drawEmpty(graphics, "MEUS CARTEIROS", "Seu portador selecionado aparecerá aqui.");
 
         super.render(graphics, mouseX, mouseY, partialTick);
-        drawTabButtons(graphics, left, panelTop);
-        if (tab == 2) drawComposeOverlay(graphics, left, right, panelTop, panelBottom, mouseX, mouseY);
+        drawTabButtons(graphics, left, panelTop, mouseX, mouseY);
+        if (tab == 2) drawComposeButtons(graphics, left, panelTop, panelBottom, mouseX, mouseY);
         if (preview != null) drawPreview(graphics, preview);
     }
 
-    private void drawFrame(GuiGraphics graphics, int left, int top, int right, int bottom) {
-        graphics.fill(left + 3, top + 3, right - 3, top + 6, GOLD);
-        graphics.fill(left + 3, top + 40, right - 3, top + 42, GOLD);
-        graphics.fill(left + 3, bottom - 44, right - 3, bottom - 42, 0xFF5C4C22);
-        int c = GOLD;
-        graphics.drawString(font, "╔", left + 6, top + 5, c, false);
-        graphics.drawString(font, "╗", right - 13, top + 5, c, false);
-        graphics.drawString(font, "╚", left + 6, bottom - 15, c, false);
-        graphics.drawString(font, "╝", right - 13, bottom - 15, c, false);
+    private void drawFrame(GuiGraphics g, int left, int top, int right, int bottom) {
+        g.fill(left + 3, top + 3, right - 3, top + 6, GOLD);
+        g.fill(left + 3, top + 40, right - 3, top + 42, GOLD);
+        g.fill(left + 3, bottom - 44, right - 3, bottom - 42, 0xFF5C4C22);
+        g.drawString(font, "╔", left + 6, top + 5, GOLD, false);
+        g.drawString(font, "╗", right - 13, top + 5, GOLD, false);
+        g.drawString(font, "╚", left + 6, bottom - 15, GOLD, false);
+        g.drawString(font, "╝", right - 13, bottom - 15, GOLD, false);
     }
 
-    private void drawTabButtons(GuiGraphics graphics, int left, int top) {
-        int width = panelWidth(), tabW = (width - 42) / 4;
+    private void drawTabButtons(GuiGraphics g, int left, int top, int mouseX, int mouseY) {
+        int w = panelWidth(), tabW = (w - 42) / 4;
         for (int i = 0; i < TABS.length; i++) {
             int x = left + 12 + i * (tabW + 6), y = top + 43;
-            boolean selected = i == tab;
-            boolean hover = mouseInside(x, y, tabW, 28, lastMouseX, lastMouseY);
-            graphics.fill(x, y, x + tabW, y + 28, GOLD);
-            graphics.fill(x + 2, y + 2, x + tabW - 2, y + 26, selected ? ACTIVE : hover ? 0xFF2A2417 : PANEL);
-            graphics.drawCenteredString(font, TABS[i], x + tabW / 2, y + 9, selected || hover ? TEXT : MUTED);
+            drawButton(g, x, y, tabW, 28, TABS[i], i == tab, mouseX, mouseY);
         }
     }
 
-    private int lastMouseX, lastMouseY;
-
-    private boolean mouseInside(int x, int y, int w, int h, int mx, int my) {
-        return mx >= x && mx < x + w && my >= y && my < y + h;
-    }
-
-    private void drawCompose(GuiGraphics graphics, int left, int right, int top, int bottom) {
+    private void drawCompose(GuiGraphics g, int left, int right, int top, int bottom, int mouseX, int mouseY) {
         int mainRight = composeMainRight(left, panelWidth());
-        int fieldLeft = left + 24;
-        int y = top + 91;
-
-        graphics.drawString(font, "DESTINATÁRIO", fieldLeft, y, GOLD, false);
-        graphics.drawString(font, "JOGADORES ONLINE", mainRight + 14, top + 91, GOLD, false);
-
-        drawFieldFrame(graphics, fieldLeft, y + 22, mainRight - fieldLeft - 92, 28);
-        drawFieldFrame(graphics, fieldLeft, y + 62, mainRight - fieldLeft, 28);
-        drawFieldFrame(graphics, fieldLeft, y + 102, mainRight - fieldLeft, 72);
-
-        graphics.drawString(font, "MENSAGEM", fieldLeft, y + 92, GOLD, false);
-        graphics.drawString(font, (message == null ? 0 : message.getValue().length()) + " / 1500",
-                mainRight - 66, y + 181, MUTED, false);
-
-        drawOnlinePanel(graphics, mainRight + 14, top + 91, right - 14, bottom - 58);
+        int fieldLeft = left + 24, y = top + 91;
+        g.drawString(font, "DESTINATÁRIO", fieldLeft, y, GOLD, false);
+        g.drawString(font, "JOGADORES ONLINE", mainRight + 14, y, GOLD, false);
+        g.drawString(font, "MENSAGEM", fieldLeft, y + 92, GOLD, false);
+        drawField(g, fieldLeft, y + 22, mainRight - fieldLeft - 92, 28);
+        drawField(g, fieldLeft, y + 62, mainRight - fieldLeft, 28);
+        drawField(g, fieldLeft, y + 102, mainRight - fieldLeft, 72);
+        g.drawString(font, (message == null ? 0 : message.getValue().length()) + " / 1500", mainRight - 66, y + 181, MUTED, false);
+        drawOnlinePanel(g, mainRight + 14, y, right - 14, bottom - 52, mouseX, mouseY);
     }
 
-    private void drawFieldFrame(GuiGraphics graphics, int x, int y, int w, int h) {
-        graphics.fill(x, y, x + w, y + h, 0xFF8B877E);
-        graphics.fill(x + 2, y + 2, x + w - 2, y + h - 2, FIELD);
+    private void drawField(GuiGraphics g, int x, int y, int w, int h) {
+        g.fill(x, y, x + w, y + h, 0xFF8B877E);
+        g.fill(x + 2, y + 2, x + w - 2, y + h - 2, FIELD);
     }
 
-    private void drawOnlinePanel(GuiGraphics graphics, int left, int top, int right, int bottom) {
-        graphics.fill(left, top, right, bottom, 0xFF5D512E);
-        graphics.fill(left + 2, top + 2, right - 2, bottom - 2, 0xFF0D0C0A);
+    private void drawOnlinePanel(GuiGraphics g, int left, int top, int right, int bottom, int mouseX, int mouseY) {
+        g.fill(left, top, right, bottom, 0xFF5D512E);
+        g.fill(left + 2, top + 2, right - 2, bottom - 2, 0xFF0D0C0A);
         int rowY = top + 27;
+        int maxRows = Math.max(1, (bottom - rowY - 4) / 24);
         if (onlinePlayers.isEmpty()) {
-            graphics.drawCenteredString(font, "Nenhum outro jogador", (left + right) / 2, rowY, MUTED);
-            graphics.drawCenteredString(font, "está online.", (left + right) / 2, rowY + 14, MUTED);
+            g.drawCenteredString(font, "Nenhum outro jogador", (left + right) / 2, rowY, MUTED);
+            g.drawCenteredString(font, "está online.", (left + right) / 2, rowY + 14, MUTED);
             return;
         }
-        int maxRows = Math.max(1, (bottom - rowY - 4) / 24);
         for (int i = 0; i < Math.min(maxRows, onlinePlayers.size()); i++) {
             int y = rowY + i * 24;
-            boolean hover = mouseInside(left + 3, y - 2, right - left - 6, 22, lastMouseX, lastMouseY);
-            if (hover) graphics.fill(left + 3, y - 2, right - 3, y + 20, 0xFF2A2417);
-            graphics.fill(left + 9, y + 4, left + 17, y + 12, GOLD);
-            graphics.drawString(font, onlinePlayers.get(i), left + 23, y + 2, hover ? TEXT : MUTED, false);
+            boolean hover = mouseInside(left + 3, y - 2, right - left - 6, 22, mouseX, mouseY);
+            if (hover) g.fill(left + 3, y - 2, right - 3, y + 20, 0xFF2A2417);
+            g.fill(left + 9, y + 4, left + 17, y + 12, GOLD);
+            g.drawString(font, onlinePlayers.get(i), left + 23, y + 2, hover ? TEXT : MUTED, false);
         }
-        if (onlinePlayers.size() > maxRows) {
-            graphics.drawString(font, "+" + (onlinePlayers.size() - maxRows) + " jogador(es)", left + 9, bottom - 14, DIM, false);
-        }
+        if (onlinePlayers.size() > maxRows) g.drawString(font, "+" + (onlinePlayers.size() - maxRows) + " jogador(es)", left + 9, bottom - 14, DIM, false);
     }
 
-    private void drawComposeOverlay(GuiGraphics graphics, int left, int right, int top, int bottom, int mouseX, int mouseY) {
-        int mainRight = composeMainRight(left, panelWidth());
-        int buttonY = bottom - 39;
-        drawNoverisButton(graphics, left + 24, buttonY, 118, 27, "✕  CANCELAR", false, mouseX, mouseY);
-        drawNoverisButton(graphics, left + 150, buttonY, 118, 27, anonymous ? "☑  ANÔNIMA" : "☐  ANÔNIMA", anonymous, mouseX, mouseY);
-        drawNoverisButton(graphics, mainRight - 136, buttonY, 112, 27, "ENVIAR", true, mouseX, mouseY);
-        graphics.drawString(font, anonymous ? "Sua identidade ficará oculta." : "O destinatário verá quem enviou.",
-                left + 286, buttonY + 9, MUTED, false);
+    private void drawComposeButtons(GuiGraphics g, int left, int top, int bottom, int mouseX, int mouseY) {
+        int mainRight = composeMainRight(left, panelWidth()), y = bottom - 39;
+        drawButton(g, left + 24, y, 118, 27, "✕  CANCELAR", false, mouseX, mouseY);
+        drawButton(g, left + 150, y, 118, 27, anonymous ? "☑  ANÔNIMA" : "☐  ANÔNIMA", anonymous, mouseX, mouseY);
+        drawButton(g, mainRight - 136, y, 112, 27, "ENVIAR", true, mouseX, mouseY);
+        g.drawString(font, anonymous ? "Sua identidade ficará oculta." : "O destinatário verá quem enviou.", left + 286, y + 9, MUTED, false);
     }
 
-    private void drawNoverisButton(GuiGraphics graphics, int x, int y, int w, int h, String label,
-                                   boolean selected, int mouseX, int mouseY) {
+    private void drawButton(GuiGraphics g, int x, int y, int w, int h, String label, boolean selected, int mouseX, int mouseY) {
         boolean hover = mouseInside(x, y, w, h, mouseX, mouseY);
-        graphics.fill(x, y, x + w, y + h, GOLD);
-        graphics.fill(x + 2, y + 2, x + w - 2, y + h - 2,
-                selected ? ACTIVE : hover ? 0xFF2A2417 : PANEL);
-        graphics.drawCenteredString(font, label, x + w / 2, y + 9, selected || hover ? TEXT : MUTED);
+        g.fill(x, y, x + w, y + h, GOLD);
+        g.fill(x + 2, y + 2, x + w - 2, y + h - 2, selected ? ACTIVE : hover ? 0xFF2A2417 : PANEL);
+        g.drawCenteredString(font, label, x + w / 2, y + 9, selected || hover ? TEXT : MUTED);
     }
 
-    private void drawLetters(GuiGraphics graphics) {
+    private void drawLetters(GuiGraphics g, int mouseX, int mouseY) {
         if (entries.isEmpty()) {
-            drawEmpty(graphics, tab == 0 ? "NENHUMA CORRESPONDÊNCIA" : "NENHUMA CARTA SELADA",
-                    "As cartas aparecerão aqui quando chegarem.");
+            drawEmpty(g, tab == 0 ? "NENHUMA CORRESPONDÊNCIA" : "NENHUMA CARTA SELADA", "As cartas aparecerão aqui quando chegarem.");
             return;
         }
         int left = panelLeft() + 24, right = panelLeft() + panelWidth() - 24, y = top() + 91;
         for (MailSnapshotPayload.Entry entry : entries) {
-            graphics.fill(left, y, right, y + 38, FIELD);
-            graphics.fill(left, y, left + 3, y + 38,
-                    entry.status().name().equals("READ") ? MUTED : GOLD);
+            boolean hover = mouseInside(left, y, right - left, 38, mouseX, mouseY);
+            g.fill(left, y, right, y + 38, hover ? 0xFF211C12 : FIELD);
+            g.fill(left, y, left + 3, y + 38, entry.status().name().equals("READ") ? MUTED : GOLD);
             String person = tab == 0 ? "De: " + entry.sender() : "Para: " + entry.recipient();
-            graphics.drawString(font, person, left + 12, y + 5, TEXT, false);
-            graphics.drawString(font, entry.subject().isBlank() ? "Sem assunto" : entry.subject(), left + 12, y + 17, MUTED, false);
-            graphics.drawString(font, truncate(entry.preview(), 58), left + 12, y + 29, MUTED, false);
-            graphics.drawString(font, displayStatus(entry.status().name()), right - 76, y + 13, GOLD, false);
+            g.drawString(font, person, left + 12, y + 5, TEXT, false);
+            g.drawString(font, entry.subject().isBlank() ? "Sem assunto" : truncate(entry.subject(), 36), left + 12, y + 17, MUTED, false);
+            g.drawString(font, truncate(entry.preview(), 58), left + 12, y + 29, MUTED, false);
+            g.drawString(font, displayStatus(entry.status().name()), right - 76, y + 13, GOLD, false);
             y += 44;
         }
-        graphics.drawString(font, "Clique em uma carta para abrir a prévia.", left, bottom() - 30, MUTED, false);
-        graphics.drawCenteredString(font, "PÁGINA " + (page + 1) + " / " + totalPages,
-                (left + right) / 2, bottom() - 30, MUTED);
-        drawNoverisButton(graphics, left, bottom() - 39, 130, 27, "◀ ANTERIOR", page > 0, lastMouseX, lastMouseY);
-        drawNoverisButton(graphics, right - 130, bottom() - 39, 130, 27, "PRÓXIMA ▶", page + 1 < totalPages, lastMouseX, lastMouseY);
+        g.drawString(font, "Clique em uma carta para abrir a prévia.", left, bottom() - 30, MUTED, false);
+        g.drawCenteredString(font, "PÁGINA " + (page + 1) + " / " + totalPages, (left + right) / 2, bottom() - 30, MUTED);
+        drawButton(g, left, bottom() - 39, 130, 27, "◀ ANTERIOR", page > 0, mouseX, mouseY);
+        drawButton(g, right - 130, bottom() - 39, 130, 27, "PRÓXIMA ▶", page + 1 < totalPages, mouseX, mouseY);
     }
 
-    private void drawPreview(GuiGraphics graphics, MailSnapshotPayload.Entry entry) {
+    private void drawPreview(GuiGraphics g, MailSnapshotPayload.Entry entry) {
         int left = panelLeft() + 70, right = panelLeft() + panelWidth() - 70;
         int previewTop = top() + 86, previewBottom = bottom() - 52;
-        graphics.fill(left, previewTop, right, previewBottom, 0xF50D0C09);
-        graphics.fill(left, previewTop, right, previewTop + 3, GOLD);
-        graphics.drawString(font, entry.subject().isBlank() ? "SEM ASSUNTO" : entry.subject(), left + 14, previewTop + 14, GOLD, false);
-        graphics.drawString(font, tab == 0 ? "De: " + entry.sender() : "Para: " + entry.recipient(), left + 14, previewTop + 30, TEXT, false);
-        graphics.drawString(font, "PRÉVIA DA CORRESPONDÊNCIA", left + 14, previewTop + 48, MUTED, false);
-        graphics.drawString(font, truncate(entry.preview(), 90), left + 14, previewTop + 70, TEXT, false);
-        graphics.drawString(font, "Clique novamente para fechar.", left + 14, previewBottom - 18, MUTED, false);
+        g.fill(left, previewTop, right, previewBottom, 0xF50D0C09);
+        g.fill(left, previewTop, right, previewTop + 3, GOLD);
+        g.drawString(font, entry.subject().isBlank() ? "SEM ASSUNTO" : entry.subject(), left + 14, previewTop + 14, GOLD, false);
+        g.drawString(font, tab == 0 ? "De: " + entry.sender() : "Para: " + entry.recipient(), left + 14, previewTop + 30, TEXT, false);
+        g.drawString(font, "PRÉVIA DA CORRESPONDÊNCIA", left + 14, previewTop + 48, MUTED, false);
+        g.drawString(font, truncate(entry.preview(), 90), left + 14, previewTop + 70, TEXT, false);
+        g.drawString(font, "Clique novamente para fechar.", left + 14, previewBottom - 18, MUTED, false);
     }
 
-    private String truncate(String value, int max) {
-        return value.length() <= max ? value : value.substring(0, max - 3) + "...";
+    private void drawEmpty(GuiGraphics g, String title, String description) {
+        int center = panelLeft() + panelWidth() / 2;
+        g.drawCenteredString(font, title, center, top() + 160, GOLD);
+        g.drawCenteredString(font, description, center, top() + 184, MUTED);
     }
+
+    private String truncate(String value, int max) { return value.length() <= max ? value : value.substring(0, max - 3) + "..."; }
 
     private String displayStatus(String status) {
         return switch (status) {
@@ -340,17 +300,8 @@ public final class MailScreen extends Screen {
         };
     }
 
-    private void drawEmpty(GuiGraphics graphics, String title, String description) {
-        int center = panelLeft() + panelWidth() / 2;
-        graphics.drawCenteredString(font, title, center, top() + 160, GOLD);
-        graphics.drawCenteredString(font, description, center, top() + 184, MUTED);
-    }
-
-    @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        lastMouseX = mouseX;
-        lastMouseY = mouseY;
-        super.render(graphics, mouseX, mouseY, partialTick);
+    private boolean mouseInside(int x, int y, int w, int h, double mx, double my) {
+        return mx >= x && mx < x + w && my >= y && my < y + h;
     }
 
     private int panelWidth() { return Math.min(980, width - 24); }
