@@ -1,6 +1,7 @@
 package dev.noveris.letter.client;
 
 import dev.noveris.letter.NoverisLetter;
+import dev.noveris.letter.network.CourierSpeechPayload;
 import dev.noveris.letter.network.MailActionResultPayload;
 import dev.noveris.letter.network.OpenMailScreenPayload;
 import dev.noveris.letter.network.MailSnapshotPayload;
@@ -23,6 +24,7 @@ public final class ClientNetwork {
         registrar.playToClient(OpenMailScreenPayload.TYPE, OpenMailScreenPayload.STREAM_CODEC, ClientNetwork::open);
         registrar.playToClient(MailActionResultPayload.TYPE, MailActionResultPayload.STREAM_CODEC, ClientNetwork::result);
         registrar.playToClient(MailSnapshotPayload.TYPE, MailSnapshotPayload.STREAM_CODEC, ClientNetwork::snapshot);
+        registrar.playToClient(CourierSpeechPayload.TYPE, CourierSpeechPayload.STREAM_CODEC, ClientNetwork::courierSpeech);
     }
 
     private static void open(OpenMailScreenPayload payload, IPayloadContext context) {
@@ -39,5 +41,9 @@ public final class ClientNetwork {
         context.enqueueWork(() -> {
             if (Minecraft.getInstance().screen instanceof MailScreen screen) screen.setSnapshot(payload);
         });
+    }
+
+    private static void courierSpeech(CourierSpeechPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> CourierSpeechManager.show(payload.entityId(), payload.message(), payload.durationTicks()));
     }
 }
