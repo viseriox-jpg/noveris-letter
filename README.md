@@ -25,12 +25,30 @@ O núcleo server-side já possui `MailSavedData` como fonte única persistente p
 
 O projeto usa o networking moderno de NeoForge (CustomPacketPayload) como próximo passo. GeckoLib não foi adicionado: a primeira apresentação será baseada em entidades/renderers vanilla, mantendo o domínio postal independente de renderização.
 
+## Carteiros
+
+Os carteiros disponíveis atualmente são:
+
+- Melito
+- Cenourito
+- Tiquinho
+- Abobito
+- Batatin
+- Pardal
+- Coruja-das-torres
+
+A interface postal organiza os carteiros em páginas, permitindo adicionar novos modelos sem sobrepor os controles de navegação.
+
+## Comandos
+
+- `/correio` — abre a interface postal.
+- `/correio carteiro` — abre diretamente a aba de seleção de carteiros.
+- `/correio historico apagar <jogador>` — remove definitivamente o histórico de correspondências do jogador; requer OP nível 2.
+
+O envio, a caixa de entrada, as enviadas e a composição de cartas são acessados pela interface `/correio`.
+
 ## Build
 
 Requer Java 21 e acesso aos repositórios Maven do NeoForge. Execute `./gradlew build`.
 
-## Comandos planejados
-
-`/correio` abrirá a interface postal e `/correio escrever` iniciará uma carta. Os comandos vanilla `/tell`, `/msg` e `/w` não são substituídos por padrão.
-
-<!-- Build trigger: 2026-09-11 -->
+<!-- Build trigger: 2026-09-12 -->
