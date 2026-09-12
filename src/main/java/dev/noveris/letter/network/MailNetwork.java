@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /** Modern NeoForge payload boundary; clients never choose an author UUID or price. */
 public final class MailNetwork {
-    private static final int PAGE_SIZE = 8;
+    private static final int PAGE_SIZE = 4;
     private MailNetwork() { }
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("1");
