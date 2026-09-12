@@ -14,7 +14,7 @@ public final class CourierCropRenderer extends GeoEntityRenderer<CourierCropEnti
     }
 
     @Override
-    protected boolean shouldShowName(CourierCropEntity entity) {
+    public boolean shouldShowName(CourierCropEntity entity) {
         return CourierSpeechManager.has(entity.getId());
     }
 
