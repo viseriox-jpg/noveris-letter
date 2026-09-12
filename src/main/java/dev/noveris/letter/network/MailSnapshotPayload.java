@@ -19,15 +19,15 @@ public record MailSnapshotPayload(int tab, int page, int totalPages, List<Entry>
                 buf.writeVarInt(payload.tab());
                 buf.writeVarInt(payload.page());
                 buf.writeVarInt(payload.totalPages());
-                buf.writeVarInt(Math.min(payload.entries().size(), 8));
-                payload.entries().stream().limit(8).forEach(entry -> {
+                buf.writeVarInt(Math.min(payload.entries().size(), 4));
+                payload.entries().stream().limit(4).forEach(entry -> {
                     buf.writeUUID(entry.id()); buf.writeUtf(entry.sender(), 80); buf.writeUtf(entry.recipient(), 80);
                     buf.writeUtf(entry.subject(), 120); buf.writeUtf(entry.preview(), 160);
                     buf.writeUtf(entry.status().name(), 24); buf.writeLong(entry.timestamp());
                 });
             }, buf -> {
                 int tab = buf.readVarInt(); int page = buf.readVarInt(); int totalPages = buf.readVarInt();
-                int size = Math.min(buf.readVarInt(), 8); List<Entry> entries = new ArrayList<>();
+                int size = Math.min(buf.readVarInt(), 4); List<Entry> entries = new ArrayList<>();
                 for (int i = 0; i < size; i++) entries.add(new Entry(buf.readUUID(), buf.readUtf(80), buf.readUtf(80), buf.readUtf(120), buf.readUtf(160), MailStatus.valueOf(buf.readUtf(24)), buf.readLong()));
                 return new MailSnapshotPayload(tab, page, totalPages, List.copyOf(entries));
             });
