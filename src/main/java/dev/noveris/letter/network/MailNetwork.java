@@ -2,7 +2,6 @@ package dev.noveris.letter.network;
 
 import com.mojang.authlib.GameProfile;
 import dev.noveris.letter.courier.CourierAppearanceRegistry;
-import dev.noveris.letter.courier.CourierUnlockService;
 import dev.noveris.letter.delivery.DeliveryManager;
 import dev.noveris.letter.mail.MailSavedData;
 import dev.noveris.letter.mail.MailService;
@@ -56,14 +55,20 @@ public final class MailNetwork {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
             CourierAppearanceRegistry registry = new CourierAppearanceRegistry();
-            var profile = MailSavedData.get(player.server.overworld()).profile(player.getUUID());
-            var result = new CourierUnlockService(registry, (ignored, price) -> false).select(profile, payload.appearanceId());
-            if (result == CourierUnlockService.SelectionResult.SUCCESS) {
-                MailSavedData.get(player.server.overworld()).markChanged();
-                PacketDistributor.sendToPlayer(player, new MailActionResultPayload(true, "Carteiro selecionado: " + registry.resolveOrDefault(payload.appearanceId()).displayName().getString() + "."));
-            } else {
-                PacketDistributor.sendToPlayer(player, new MailActionResultPayload(false, "Esse carteiro ainda não está desbloqueado."));
+            MailSavedData data = MailSavedData.get(player.server.overworld());
+            var appearance = registry.find(payload.appearanceId()).orElse(null);
+            if (appearance == null) {
+                PacketDistributor.sendToPlayer(player, new MailActionResultPayload(false, "Carteiro desconhecido."));
+                return;
             }
+            var profile = data.profile(player.getUUID());
+            if (!profile.isUnlocked(appearance.id())) {
+                PacketDistributor.sendToPlayer(player, new MailActionResultPayload(false, "Esse carteiro ainda não está desbloqueado."));
+                return;
+            }
+            profile.select(appearance.id());
+            data.markChanged();
+            PacketDistributor.sendToPlayer(player, new MailActionResultPayload(true, "Carteiro selecionado: " + appearance.displayName().getString() + "."));
         });
     }
 
