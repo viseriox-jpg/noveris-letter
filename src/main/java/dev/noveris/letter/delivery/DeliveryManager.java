@@ -15,13 +15,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -31,7 +29,6 @@ public final class DeliveryManager {
     private static final int MAX_DELIVERIES_PER_PLAYER = 4;
     private static final long RETRY_DELAY_MS = 1000L;
     private static final Map<UUID, UUID> ACTIVE_COURIERS = new HashMap<>();
-
     private DeliveryManager() { }
 
     public static void tick(ServerTickEvent.Post event) {
@@ -40,14 +37,8 @@ public final class DeliveryManager {
         if (server.getTickCount() % TICK_INTERVAL != 0) return;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) processFor(server, player);
     }
-
-    public static void playerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) processFor(player.server, player);
-    }
-
-    public static void processFor(MinecraftServer server, ServerPlayer recipient) {
-        for (int i = 0; i < MAX_DELIVERIES_PER_PLAYER; i++) if (!processOne(server, recipient)) return;
-    }
+    public static void playerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) { if (event.getEntity() instanceof ServerPlayer player) processFor(player.server, player); }
+    public static void processFor(MinecraftServer server, ServerPlayer recipient) { for (int i = 0; i < MAX_DELIVERIES_PER_PLAYER; i++) if (!processOne(server, recipient)) return; }
 
     private static boolean processOne(MinecraftServer server, ServerPlayer recipient) {
         MailService service = new MailService(server, new CourierAppearanceRegistry(), 1500, 120);
@@ -55,25 +46,17 @@ public final class DeliveryManager {
         reconcilePendingLetters(data, recipient);
         var next = data.deliveryQueue().nextReadyFor(recipient.getUUID(), System.currentTimeMillis());
         if (next.isEmpty()) return false;
-
         DeliveryEntry entry = next.get();
         MailLetter letter = service.findVisible(recipient, entry.letterId()).orElse(null);
-        if (letter == null) {
-            data.deliveryQueue().remove(entry.id());
-            data.markChanged();
-            return true;
-        }
-
+        if (letter == null) { data.deliveryQueue().remove(entry.id()); data.markChanged(); return true; }
         var appearance = new CourierAppearanceRegistry().resolveOrDefault(entry.courierAppearanceId());
         ServerLevel level = recipient.serverLevel();
         CourierBirdEntity courier = createCourier(level, appearance.id());
         if (courier == null) return false;
-
-        Vec3 spawn = findSpawnPosition(level, recipient);
+        Vec3 spawn = findSpawnPosition(level, recipient, appearance.id());
         courier.entity().setPos(spawn.x, spawn.y, spawn.z);
         courier.configure(letter.id(), recipient.getUUID(), appearance.id());
         if (!level.addFreshEntity(courier.entity())) return false;
-
         ACTIVE_COURIERS.put(letter.id(), courier.entity().getUUID());
         data.deliveryQueue().replace(entry.withState(DeliveryState.PRESENTING));
         data.markChanged();
@@ -86,25 +69,30 @@ public final class DeliveryManager {
         if (appearanceId.equals(CourierAppearanceRegistry.CAPYBARA_ID)) return CourierEntities.COURIER_CAPYBARA.get().create(level);
         if (appearanceId.equals(CourierAppearanceRegistry.COATI_ID)) return CourierEntities.COURIER_COATI.get().create(level);
         if (appearanceId.equals(CourierAppearanceRegistry.RED_PANDA_ID)) return CourierEntities.COURIER_RED_PANDA.get().create(level);
+        if (appearanceId.equals(CourierAppearanceRegistry.SPARROW_ID) || appearanceId.equals(CourierAppearanceRegistry.BARN_OWL_ID)) return CourierEntities.COURIER_LEGACY_BIRD.get().create(level);
         return CourierEntities.COURIER_MOSSBLOOM.get().create(level);
     }
 
-    private static Vec3 findSpawnPosition(ServerLevel level, ServerPlayer recipient) {
-        for (int attempt = 0; attempt < 12; attempt++) {
-            double angle = recipient.getRandom().nextDouble() * Math.PI * 2.0D;
-            double distance = 72.0D + recipient.getRandom().nextDouble() * 18.0D;
-            int x = (int) Math.floor(recipient.getX() + Math.cos(angle) * distance);
-            int z = (int) Math.floor(recipient.getZ() + Math.sin(angle) * distance);
-            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-            BlockPos ground = new BlockPos(x, y, z);
-            if (level.getBlockState(ground).isAir() && level.getBlockState(ground.below()).isSolid()) {
-                return new Vec3(x + 0.5D, y, z + 0.5D);
-            }
-        }
-        int x = (int) Math.floor(recipient.getX() + 80.0D);
-        int z = (int) Math.floor(recipient.getZ());
+    private static Vec3 findSpawnPosition(ServerLevel level, ServerPlayer recipient, ResourceLocation appearanceId) {
+        double angle = recipient.getRandom().nextDouble() * Math.PI * 2.0D;
+        double distance = 28.0D + recipient.getRandom().nextDouble() * 6.0D;
+        int x = (int)Math.floor(recipient.getX() + Math.cos(angle) * distance);
+        int z = (int)Math.floor(recipient.getZ() + Math.sin(angle) * distance);
+        boolean flying = appearanceId.equals(CourierAppearanceRegistry.SPARROW_ID) || appearanceId.equals(CourierAppearanceRegistry.BARN_OWL_ID);
+        if (flying) return new Vec3(x + 0.5D, recipient.getY() + 4.0D + recipient.getRandom().nextDouble() * 2.0D, z + 0.5D);
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-        return new Vec3(x + 0.5D, y, z + 0.5D);
+        BlockPos ground = new BlockPos(x, y, z);
+        if (level.getBlockState(ground).isAir() && level.getBlockState(ground.below()).isSolid()) return new Vec3(x + 0.5D, y, z + 0.5D);
+        for (int attempt = 0; attempt < 10; attempt++) {
+            angle = recipient.getRandom().nextDouble() * Math.PI * 2.0D;
+            distance = 28.0D + recipient.getRandom().nextDouble() * 6.0D;
+            x = (int)Math.floor(recipient.getX() + Math.cos(angle) * distance);
+            z = (int)Math.floor(recipient.getZ() + Math.sin(angle) * distance);
+            y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            ground = new BlockPos(x, y, z);
+            if (level.getBlockState(ground).isAir() && level.getBlockState(ground.below()).isSolid()) return new Vec3(x + 0.5D, y, z + 0.5D);
+        }
+        return new Vec3(recipient.getX() + 30.0D, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int)recipient.getX() + 30, (int)recipient.getZ()), recipient.getZ());
     }
 
     public static void finishCourierDelivery(CourierBirdEntity courier, ServerPlayer recipient) {
@@ -115,7 +103,6 @@ public final class DeliveryManager {
         MailSavedData data = MailSavedData.get(server.overworld());
         MailLetter letter = service.findVisible(recipient, letterId).orElse(null);
         if (letter == null) { clearActive(letterId); courier.entity().remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED); return; }
-
         ItemStack book = LetterBookFactory.create(letter);
         boolean stored = recipient.getInventory().add(book);
         if (!stored) recipient.drop(book, false);
@@ -131,35 +118,24 @@ public final class DeliveryManager {
 
     private static void reconcileActivePresentations(MinecraftServer server) {
         MailSavedData data = MailSavedData.get(server.overworld());
-        long now = System.currentTimeMillis();
-        boolean changed = false;
+        long now = System.currentTimeMillis(); boolean changed = false;
         for (DeliveryEntry entry : data.deliveryQueue().snapshot()) {
             if (entry.state() != DeliveryState.PRESENTING) continue;
             UUID courierId = ACTIVE_COURIERS.get(entry.letterId());
             if (courierId != null && findEntity(server, courierId) instanceof CourierBirdEntity) continue;
-            data.deliveryQueue().replace(entry.retryAt(now + RETRY_DELAY_MS));
-            changed = true;
+            data.deliveryQueue().replace(entry.retryAt(now + RETRY_DELAY_MS)); changed = true;
         }
         if (changed) data.markChanged();
     }
-
-    private static net.minecraft.world.entity.Entity findEntity(MinecraftServer server, UUID entityId) {
-        for (ServerLevel level : server.getAllLevels()) {
-            var entity = level.getEntity(entityId);
-            if (entity != null) return entity;
-        }
-        return null;
-    }
-
+    private static net.minecraft.world.entity.Entity findEntity(MinecraftServer server, UUID entityId) { for (ServerLevel level : server.getAllLevels()) { var entity = level.getEntity(entityId); if (entity != null) return entity; } return null; }
     private static void clearActive(UUID letterId) { ACTIVE_COURIERS.remove(letterId); }
-
     private static void reconcilePendingLetters(MailSavedData data, ServerPlayer recipient) {
-        long now = System.currentTimeMillis();
-        boolean changed = false;
+        long now = System.currentTimeMillis(); boolean changed = false;
         for (MailLetter letter : data.letters().values()) {
             if (letter.status() != dev.noveris.letter.mail.MailStatus.IN_TRANSIT || !letter.recipientId().equals(recipient.getUUID())) continue;
             if (data.deliveryQueue().containsLetter(letter.id())) continue;
-            data.deliveryQueue().enqueue(DeliveryFactory.create(letter.id(), letter.senderId(), letter.recipientId(), DeliveryType.NORMAL, DeliveryPriority.NORMAL, CourierAppearanceRegistry.DEFAULT_ID, now, now));
+            ResourceLocation courierId = data.profile(letter.senderId()).selectedAppearance();
+            data.deliveryQueue().enqueue(DeliveryFactory.create(letter.id(), letter.senderId(), letter.recipientId(), DeliveryType.NORMAL, DeliveryPriority.NORMAL, courierId, now, now));
             changed = true;
         }
         if (changed) data.markChanged();

@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 public final class NoverisLetter {
     public static final String MOD_ID = "noveris_letter";
     public static final Logger LOGGER = LogUtils.getLogger();
-
     public NoverisLetter(IEventBus modBus) {
         LOGGER.info("Initializing Noveris Letter");
         CourierEntities.ENTITY_TYPES.register(modBus);
@@ -29,19 +28,15 @@ public final class NoverisLetter {
         NeoForge.EVENT_BUS.addListener(DeliveryManager::playerLoggedIn);
         modBus.addListener(NoverisLetter::registerPayloads);
     }
-
     private static void registerEntityAttributes(EntityAttributeCreationEvent event) {
-        AttributeSupplier attributes = Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 8.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.25D)
-                .build();
+        AttributeSupplier attributes = Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 8.0D).add(Attributes.MOVEMENT_SPEED, 0.25D).build();
         event.put(CourierEntities.COURIER_BOOPLET.get(), attributes);
         event.put(CourierEntities.COURIER_CAPYBARA.get(), attributes);
         event.put(CourierEntities.COURIER_COATI.get(), attributes);
         event.put(CourierEntities.COURIER_MOSSBLOOM.get(), attributes);
         event.put(CourierEntities.COURIER_RED_PANDA.get(), attributes);
+        event.put(CourierEntities.COURIER_LEGACY_BIRD.get(), attributes);
     }
-
     private static void registerCommands(RegisterCommandsEvent event) { MailCommands.register(event); }
     private static void registerPayloads(RegisterPayloadHandlersEvent event) { MailNetwork.register(event); }
 }

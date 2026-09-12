@@ -30,6 +30,13 @@ jobs:
           )"
           curl -fsSL "$CLUTTER_URL" -o /tmp/clutterbestiary.jar
           python tools/import_clutter_courier_assets.py /tmp/clutterbestiary.jar
+      - name: Import preserved Sparrow and Barn Owl assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          FRIGINZI_URL="https://api.modrinth.com/maven/maven.modrinth/OsLkXa0u/Z0gsHRNS"
+          curl -fsSL "$FRIGINZI_URL" -o /tmp/frikinzis-fauna.jar
+          python tools/import_legacy_bird_assets.py /tmp/frikinzis-fauna.jar
       - name: Build
         run: ./gradlew build --no-daemon
       - name: Upload jar
