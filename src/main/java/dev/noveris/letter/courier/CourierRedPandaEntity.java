@@ -30,7 +30,7 @@ public final class CourierRedPandaEntity extends TamableAnimal implements Courie
     public final AnimationState sitEndAnimationState = new AnimationState();
     public final AnimationState sniffAnimationState = new AnimationState();
     private final CourierState courierState = new CourierState(this);
-    public CourierRedPandaEntity(EntityType<? extends TamableAnimal> type, Level level) { super(type, level); setNoGravity(true); }
+    public CourierRedPandaEntity(EntityType<? extends TamableAnimal> type, Level level) { super(type, level); }
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) { super.defineSynchedData(b); b.define(COURIER_APPEARANCE, CourierAppearanceRegistry.RED_PANDA_ID.toString()); }
     @Override public UUID getLetterId() { return courierState.letterId(); }
     @Override public UUID getRecipientId() { return courierState.recipientId(); }
