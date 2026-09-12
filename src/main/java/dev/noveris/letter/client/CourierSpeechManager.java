@@ -3,6 +3,7 @@ package dev.noveris.letter.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -48,14 +49,16 @@ public final class CourierSpeechManager {
         Minecraft minecraft = Minecraft.getInstance();
         Font font = minecraft.font;
         String message = speech.message();
-        float scale = 0.025F;
+
+        // Keep the speech bubble compact and make the text completely independent
+        // from the world's lighting so it stays bright white even at night/in shadow.
+        float scale = 0.014F;
         float y = entity.getBbHeight() + 0.62F;
         int opacity = (int) (alpha(entity.getId()) * 255.0F) & 0xFF;
-
-        // White lettering for clear readability, with a softer warm translucent backdrop.
         int textColor = (opacity << 24) | 0xFFFFFF;
-        int backgroundOpacity = (int) (opacity * 0.72F) & 0xFF;
-        int background = (backgroundOpacity << 24) | 0x2A261F;
+        int backgroundOpacity = (int) (opacity * 0.78F) & 0xFF;
+        int background = (backgroundOpacity << 24) | 0x17140F;
+        int fullBright = LightTexture.FULL_BRIGHT;
 
         poseStack.pushPose();
         poseStack.translate(0.0D, y, 0.0D);
@@ -63,15 +66,15 @@ public final class CourierSpeechManager {
         poseStack.scale(scale, -scale, scale);
 
         Matrix4f matrix = poseStack.last().pose();
-        Component text = Component.literal("  " + message + "  ");
+        Component text = Component.literal(" " + message + " ");
         float textX = -font.width(text) / 2.0F;
         float textY = -font.lineHeight / 2.0F;
         font.drawInBatch(text, textX, textY, textColor, false, matrix, buffer,
-                Font.DisplayMode.NORMAL, background, packedLight);
+                Font.DisplayMode.NORMAL, background, fullBright);
 
         Component tail = Component.literal("▾");
         font.drawInBatch(tail, -font.width(tail) / 2.0F, 5.0F,
-                textColor, false, matrix, buffer, Font.DisplayMode.NORMAL, 0, packedLight);
+                textColor, false, matrix, buffer, Font.DisplayMode.NORMAL, 0, fullBright);
         poseStack.popPose();
     }
 
