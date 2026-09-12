@@ -28,7 +28,7 @@ public final class CourierCoatiEntity extends TamableAnimal implements CourierBi
     public final AnimationState leftEarTwitchAnimationState = new AnimationState();
     public final AnimationState rightEarTwitchAnimationState = new AnimationState();
     private final CourierState courierState = new CourierState(this);
-    public CourierCoatiEntity(EntityType<? extends TamableAnimal> type, Level level) { super(type, level); setNoGravity(true); }
+    public CourierCoatiEntity(EntityType<? extends TamableAnimal> type, Level level) { super(type, level); }
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) { super.defineSynchedData(b); b.define(COURIER_APPEARANCE, CourierAppearanceRegistry.COATI_ID.toString()); }
     public boolean hasChest() { return false; }
     public int getDaysFedHoney() { return 0; }
