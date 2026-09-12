@@ -67,9 +67,11 @@ public final class CourierBirdEntity extends PathfinderMob implements GeoEntity 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        setAppearance(ResourceLocation.parse(tag.getString("appearance").orElse(CourierAppearanceRegistry.DEFAULT_ID.toString())));
-        letterId = tag.getUUID("letter").orElse(null);
-        recipientId = tag.getUUID("recipient").orElse(null);
+        String appearance = tag.getString("appearance");
+        if (appearance == null || appearance.isBlank()) appearance = CourierAppearanceRegistry.DEFAULT_ID.toString();
+        setAppearance(ResourceLocation.parse(appearance));
+        letterId = tag.getUUID("letter");
+        recipientId = tag.getUUID("recipient");
     }
 
     @Override
