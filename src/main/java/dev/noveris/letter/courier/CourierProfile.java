@@ -40,7 +40,6 @@ public final class CourierProfile {
                 CourierAppearanceRegistry.WHEAT_ID,
                 CourierAppearanceRegistry.PUMPKIN_ID,
                 CourierAppearanceRegistry.POTATO_ID,
-                CourierAppearanceRegistry.SPARROW_ID,
-                CourierAppearanceRegistry.BARN_OWL_ID));
+                CourierAppearanceRegistry.SPARROW_ID));
     }
 }
