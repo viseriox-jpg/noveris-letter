@@ -1,6 +1,5 @@
 package dev.noveris.letter.courier;
 
-import dev.noveris.letter.delivery.DeliveryManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -22,10 +21,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.UUID;
 
-/**
- * Single runtime entity shared by all five Crop Critters courier appearances.
- * The selected appearance controls only the model, texture and animation resource.
- */
+/** Single runtime entity shared by all five Crop Critter courier appearances. */
 public final class CourierCropEntity extends TamableAnimal implements CourierEntity, GeoEntity {
     private static final EntityDataAccessor<String> COURIER_APPEARANCE =
             SynchedEntityData.defineId(CourierCropEntity.class, EntityDataSerializers.STRING);
@@ -76,12 +72,9 @@ public final class CourierCropEntity extends TamableAnimal implements CourierEnt
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // Crop Critters' supplied basic_critter animation file contains the exact
-        // misc.idle and move.walk clips used by the original mod. Pumpkin has its
-        // own file with the same controller names and is selected by the model.
+        // These are the same controller names used by the supplied Crop Critters assets.
         controllers.add(DefaultAnimations.genericWalkIdleController(this));
     }
 
     @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return geoCache; }
-    @Override public Entity entity() { return this; }
 }
