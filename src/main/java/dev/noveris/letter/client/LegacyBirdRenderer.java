@@ -14,7 +14,7 @@ public final class LegacyBirdRenderer extends GeoEntityRenderer<CourierLegacyBir
     }
 
     @Override
-    protected boolean shouldShowName(CourierLegacyBirdEntity entity) {
+    public boolean shouldShowName(CourierLegacyBirdEntity entity) {
         return CourierSpeechManager.has(entity.getId());
     }
 
