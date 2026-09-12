@@ -11,9 +11,12 @@ public final class CourierProfile {
     private final Set<ResourceLocation> unlockedAppearances = new LinkedHashSet<>();
     public CourierProfile() {
         this.selectedAppearance = CourierAppearanceRegistry.DEFAULT_ID;
-        this.unlockedAppearances.add(CourierAppearanceRegistry.DEFAULT_ID);
-        this.unlockedAppearances.add(CourierAppearanceRegistry.SPARROW_ID);
-        this.unlockedAppearances.add(CourierAppearanceRegistry.BARN_OWL_ID);
+        this.unlockedAppearances.addAll(java.util.List.of(
+                CourierAppearanceRegistry.MOSSBLOOM_ID,
+                CourierAppearanceRegistry.COATI_ID,
+                CourierAppearanceRegistry.RED_PANDA_ID,
+                CourierAppearanceRegistry.BOOPLET_ID,
+                CourierAppearanceRegistry.CAPYBARA_ID));
     }
     public ResourceLocation selectedAppearance() { return selectedAppearance; }
     public Set<ResourceLocation> unlockedAppearances() { return Set.copyOf(unlockedAppearances); }
@@ -26,9 +29,12 @@ public final class CourierProfile {
     }
     public void restore(ResourceLocation selected, Collection<ResourceLocation> unlocked) {
         unlockedAppearances.clear();
-        unlockedAppearances.add(CourierAppearanceRegistry.DEFAULT_ID);
-        unlockedAppearances.add(CourierAppearanceRegistry.SPARROW_ID);
-        unlockedAppearances.add(CourierAppearanceRegistry.BARN_OWL_ID);
+        unlockedAppearances.addAll(java.util.List.of(
+                CourierAppearanceRegistry.MOSSBLOOM_ID,
+                CourierAppearanceRegistry.COATI_ID,
+                CourierAppearanceRegistry.RED_PANDA_ID,
+                CourierAppearanceRegistry.BOOPLET_ID,
+                CourierAppearanceRegistry.CAPYBARA_ID));
         unlockedAppearances.addAll(unlocked);
         selectedAppearance = unlockedAppearances.contains(selected) ? selected : CourierAppearanceRegistry.DEFAULT_ID;
     }
