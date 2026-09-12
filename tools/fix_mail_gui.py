@@ -23,7 +23,7 @@ new_roster = '''    private static final ResourceLocation[] COURIERS = {
             CourierAppearanceRegistry.SPARROW_ID,
             CourierAppearanceRegistry.BARN_OWL_ID
     };
-    private static final String[] NAMES = {"MELON CRITTER", "CARROT CRITTER", "WHEAT CRITTER", "PUMPKIN CRITTER", "POTATO CRITTER", "PARDAL", "CORUJA"};
+    private static final String[] NAMES = {"MELITO", "CENOURITO", "TIQUINHO", "ABOBITO", "BATATIN", "PARDAL", "CORUJA"};
     private static final String[] DESC = {"Doce e animado", "Ágil e simpático", "Leve e trabalhador", "Forte e festivo", "Pequeno e resistente", "Rápido e leve", "Silenciosa e observadora"};'''
 if old_roster not in s:
     raise SystemExit("courier roster block not found")
