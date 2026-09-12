@@ -50,13 +50,13 @@ public final class CourierSpeechManager {
         Font font = minecraft.font;
         String message = speech.message();
 
-        // Keep the speech bubble compact and make the text completely independent
-        // from the world's lighting so it stays bright white even at night/in shadow.
+        // Use the see-through text layer so the bubble never gets darkened or hidden
+        // by the world's depth/lighting when the camera moves around the courier.
         float scale = 0.014F;
         float y = entity.getBbHeight() + 0.62F;
         int opacity = (int) (alpha(entity.getId()) * 255.0F) & 0xFF;
         int textColor = (opacity << 24) | 0xFFFFFF;
-        int backgroundOpacity = (int) (opacity * 0.78F) & 0xFF;
+        int backgroundOpacity = (int) (opacity * 0.50F) & 0xFF;
         int background = (backgroundOpacity << 24) | 0x17140F;
         int fullBright = LightTexture.FULL_BRIGHT;
 
@@ -70,11 +70,11 @@ public final class CourierSpeechManager {
         float textX = -font.width(text) / 2.0F;
         float textY = -font.lineHeight / 2.0F;
         font.drawInBatch(text, textX, textY, textColor, false, matrix, buffer,
-                Font.DisplayMode.NORMAL, background, fullBright);
+                Font.DisplayMode.SEE_THROUGH, background, fullBright);
 
         Component tail = Component.literal("▾");
         font.drawInBatch(tail, -font.width(tail) / 2.0F, 5.0F,
-                textColor, false, matrix, buffer, Font.DisplayMode.NORMAL, 0, fullBright);
+                textColor, false, matrix, buffer, Font.DisplayMode.SEE_THROUGH, 0, fullBright);
         poseStack.popPose();
     }
 
