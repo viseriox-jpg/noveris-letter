@@ -1,7 +1,9 @@
 package dev.noveris.letter.client;
 
+import dev.noveris.letter.courier.CourierAppearanceRegistry;
 import dev.noveris.letter.network.MailSnapshotPayload;
 import dev.noveris.letter.network.RequestMailSnapshotPayload;
+import dev.noveris.letter.network.SelectCourierPayload;
 import dev.noveris.letter.network.SendLetterPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -9,6 +11,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
@@ -20,6 +23,12 @@ public final class MailScreen extends Screen {
     private static final int GOLD = 0xFFFFD84D, ACTIVE = 0xFFD6A800, TEXT = 0xFFFFFBEB;
     private static final int MUTED = 0xFFC9BE9B, DIM = 0xFF77705D;
     private static final String[] TABS = {"RECEBIDAS", "ENVIADAS", "ESCREVER", "CARTEIRO"};
+    private static final ResourceLocation[] COURIERS = {
+            CourierAppearanceRegistry.DEFAULT_ID,
+            CourierAppearanceRegistry.SPARROW_ID,
+            CourierAppearanceRegistry.BARN_OWL_ID
+    };
+    private static final String[] COURIER_NAMES = {"CORVO", "PARDAL", "CORUJA-DAS-TORRES"};
 
     private int tab, page, totalPages = 1;
     private boolean anonymous;
@@ -27,6 +36,7 @@ public final class MailScreen extends Screen {
     private List<MailSnapshotPayload.Entry> entries = List.of();
     private MailSnapshotPayload.Entry preview;
     private List<String> onlinePlayers = List.of();
+    private int selectedCourierIndex;
 
     public MailScreen(int tab) {
         super(Component.literal("Serviço Postal de Noveris"));
@@ -133,7 +143,21 @@ public final class MailScreen extends Screen {
             if (mouseInside(right - 136, buttonY, 112, 27, mouseX, mouseY)) { send(); return true; }
             return false;
         }
-        if (tab != 0 && tab != 1) return false;
+        if (tab == 3) {
+            int cardTop = top() + 92;
+            int cardBottom = bottom() - 54;
+            int gap = 12;
+            int cardW = (panelWidth() - 48 - gap * 2) / 3;
+            for (int i = 0; i < COURIERS.length; i++) {
+                int x = left + 24 + i * (cardW + gap);
+                if (mouseInside(x, cardTop, cardW, cardBottom - cardTop, mouseX, mouseY)) {
+                    selectedCourierIndex = i;
+                    PacketDistributor.sendToServer(new SelectCourierPayload(COURIERS[i]));
+                    return true;
+                }
+            }
+            return false;
+        }
         int listLeft = left + 24, listRight = right - 24, y = top() + 91;
         for (MailSnapshotPayload.Entry entry : entries) {
             if (mouseInside(listLeft, y, listRight - listLeft, 38, mouseX, mouseY)) {
@@ -160,7 +184,7 @@ public final class MailScreen extends Screen {
         drawTabButtons(graphics, left, panelTop, mouseX, mouseY);
         if (tab == 2) drawCompose(graphics, left, right, panelTop, panelBottom, mouseX, mouseY);
         else if (tab == 0 || tab == 1) drawLetters(graphics, mouseX, mouseY);
-        else drawEmpty(graphics, "MEUS CARTEIROS", "Seu portador selecionado aparecerá aqui.");
+        else drawCourierSelection(graphics, left, right, panelTop, panelBottom, mouseX, mouseY);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (tab == 2) drawComposeButtons(graphics, left, panelTop, panelBottom, mouseX, mouseY);
         if (preview != null) drawPreview(graphics, preview);
@@ -218,6 +242,26 @@ public final class MailScreen extends Screen {
             g.drawString(font, onlinePlayers.get(i), left + 23, y + 2, hover ? TEXT : MUTED, false);
         }
         if (onlinePlayers.size() > maxRows) g.drawString(font, "+" + (onlinePlayers.size() - maxRows) + " jogador(es)", left + 9, bottom - 14, DIM, false);
+    }
+
+    private void drawCourierSelection(GuiGraphics g, int left, int right, int top, int bottom, int mouseX, int mouseY) {
+        g.drawString(font, "CARTEIROS DISPONÍVEIS", left + 24, top + 73, GOLD, false);
+        g.drawString(font, "Escolha o pássaro que fará as próximas entregas.", left + 24, top + 84, MUTED, false);
+        int cardTop = top + 102;
+        int cardBottom = bottom - 54;
+        int gap = 12;
+        int cardW = (panelWidth() - 48 - gap * 2) / 3;
+        for (int i = 0; i < COURIERS.length; i++) {
+            int x = left + 24 + i * (cardW + gap);
+            boolean hover = mouseInside(x, cardTop, cardW, cardBottom - cardTop, mouseX, mouseY);
+            boolean selected = selectedCourierIndex == i;
+            g.fill(x, cardTop, x + cardW, cardBottom, hover ? 0xFF2A2417 : FIELD);
+            g.fill(x, cardTop, x + cardW, cardTop + 3, selected ? GOLD : 0xFF5C4C22);
+            g.drawCenteredString(font, COURIER_NAMES[i], x + cardW / 2, cardTop + 24, selected ? GOLD : TEXT);
+            g.drawCenteredString(font, i == 0 ? "Rápido e confiável" : i == 1 ? "Leve e ágil" : "Silenciosa e elegante", x + cardW / 2, cardTop + 48, MUTED);
+            g.drawCenteredString(font, "CAMINHA ATÉ VOCÊ", x + cardW / 2, cardTop + 78, DIM);
+            drawButton(g, x + 18, cardBottom - 40, cardW - 36, 27, selected ? "SELECIONADO" : "SELECIONAR", selected, mouseX, mouseY);
+        }
     }
 
     private void drawComposeButtons(GuiGraphics g, int left, int top, int bottom, int mouseX, int mouseY) {
