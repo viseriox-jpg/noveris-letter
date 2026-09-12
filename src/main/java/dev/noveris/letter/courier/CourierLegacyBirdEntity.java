@@ -1,13 +1,6 @@
 package dev.noveris.letter.courier;
 
-import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.AnimationState;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
-import software.bernie.geckolib.util.GeckoLibUtil;
+import dev.noveris.letter.delivery.DeliveryManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -19,11 +12,19 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import dev.noveris.letter.delivery.DeliveryManager;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.UUID;
 
-public final class CourierLegacyBirdEntity extends PathfinderMob implements CourierBirdEntity, GeoEntity {
+/** The two preserved flying couriers: Sparrow and Barn Owl. */
+public final class CourierLegacyBirdEntity extends PathfinderMob implements CourierEntity, GeoEntity {
     private static final EntityDataAccessor<String> APPEARANCE = SynchedEntityData.defineId(CourierLegacyBirdEntity.class, EntityDataSerializers.STRING);
     private static final double FLIGHT_SPEED = 0.24D;
     private static final double ARRIVAL_DISTANCE = 2.5D;
