@@ -41,7 +41,7 @@ jobs:
           unzip -p /tmp/cropcritters.jar META-INF/MANIFEST.MF | grep -F 'Implementation-Version: 1.5.0'
           unzip -p /tmp/cropcritters.jar META-INF/neoforge.mods.toml | grep -F 'modId = "cropcritters"'
           python tools/import_crop_critter_courier_assets.py /tmp/cropcritters.jar
-      - name: Import preserved Sparrow and Barn Owl assets
+      - name: Import preserved Sparrow assets
         shell: bash
         run: |
           set -euo pipefail
