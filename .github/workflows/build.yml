@@ -55,6 +55,8 @@ jobs:
           python tools/import_legacy_bird_assets.py /tmp/frikinzis-fauna.jar
       - name: Apply final GUI layout fix
         run: python tools/fix_mail_gui.py
+      - name: Prevent courier preview from covering names
+        run: python tools/fix_mail_preview.py
       - name: Build
         run: ./gradlew build --no-daemon
       - name: Upload jar
