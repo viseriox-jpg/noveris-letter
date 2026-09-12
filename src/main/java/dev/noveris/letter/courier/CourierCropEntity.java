@@ -21,7 +21,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.UUID;
 
-/** Single runtime entity shared by all five Crop Critter courier appearances. */
+/** Single runtime entity shared by all five Crop Critters courier appearances. */
 public final class CourierCropEntity extends TamableAnimal implements CourierEntity, GeoEntity {
     private static final EntityDataAccessor<String> COURIER_APPEARANCE =
             SynchedEntityData.defineId(CourierCropEntity.class, EntityDataSerializers.STRING);
@@ -44,10 +44,15 @@ public final class CourierCropEntity extends TamableAnimal implements CourierEnt
     @Override public UUID getRecipientId() { return courierState.recipientId(); }
     @Override public ResourceLocation getAppearanceId() { return ResourceLocation.parse(entityData.get(COURIER_APPEARANCE)); }
 
+    /** Changes only the visual appearance; used by the client-side courier preview. */
+    public void setAppearance(ResourceLocation appearance) {
+        entityData.set(COURIER_APPEARANCE, appearance.toString());
+    }
+
     @Override
     public void configure(UUID letterId, UUID recipientId, ResourceLocation appearance) {
         courierState.configure(letterId, recipientId, appearance);
-        entityData.set(COURIER_APPEARANCE, appearance.toString());
+        setAppearance(appearance);
     }
 
     @Override public void beginDeparture(ServerPlayer recipient) { courierState.beginDeparture(recipient); }
@@ -64,7 +69,7 @@ public final class CourierCropEntity extends TamableAnimal implements CourierEnt
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         courierState.load(tag);
-        entityData.set(COURIER_APPEARANCE, courierState.appearanceId().toString());
+        setAppearance(courierState.appearanceId());
     }
 
     @Override public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob parent) { return null; }
@@ -72,7 +77,6 @@ public final class CourierCropEntity extends TamableAnimal implements CourierEnt
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // These are the same controller names used by the supplied Crop Critters assets.
         controllers.add(DefaultAnimations.genericWalkIdleController(this));
     }
 
