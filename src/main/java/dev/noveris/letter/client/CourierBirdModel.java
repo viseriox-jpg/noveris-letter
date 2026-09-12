@@ -1,53 +1,65 @@
 package dev.noveris.letter.client;
 
-import dev.noveris.letter.NoverisLetter;
 import dev.noveris.letter.courier.CourierAppearanceRegistry;
 import dev.noveris.letter.courier.CourierBirdEntity;
-import net.minecraft.resources.ResourceLocation;
-import software.bernie.geckolib.model.GeoModel;
+import dev.noveris.letter.courier.CourierBoopletEntity;
+import dev.noveris.letter.courier.CourierCapybaraEntity;
+import dev.noveris.letter.courier.CourierCoatiEntity;
+import dev.noveris.letter.courier.CourierMossbloomEntity;
+import dev.noveris.letter.courier.CourierRedPandaEntity;
+import dev.noveris.letter.courier.precompiled.BoopletModel;
+import dev.noveris.letter.courier.precompiled.CapybaraModel;
+import dev.noveris.letter.courier.precompiled.CoatiModel;
+import dev.noveris.letter.courier.precompiled.MossbloomModel;
+import dev.noveris.letter.courier.precompiled.RedPandaModel;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.HierarchicalModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.world.entity.Mob;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
-public final class CourierBirdModel extends GeoModel<CourierBirdEntity> {
-    private static final ResourceLocation RAVEN_MODEL = id("geo/entity/raven/raven.geo.json");
-    private static final ResourceLocation RAVEN_FLY_MODEL = id("geo/entity/raven/ravenfly.geo.json");
-    private static final ResourceLocation SPARROW_MODEL = id("geo/entity/sparrow/sparrow.geo.json");
-    private static final ResourceLocation SPARROW_FLY_MODEL = id("geo/entity/sparrow/sparrowfly.geo.json");
-    private static final ResourceLocation BARN_OWL_MODEL = id("geo/entity/barnowl/barnowl.geo.json");
-    private static final ResourceLocation BARN_OWL_FLY_MODEL = id("geo/entity/barnowl/barnowlfly.geo.json");
-    private static final ResourceLocation RAVEN_TEXTURE = id("textures/entity/courier/raven.png");
-    private static final ResourceLocation RAVEN_FLY_TEXTURE = id("textures/entity/courier/ravenfly.png");
-    private static final ResourceLocation SPARROW_TEXTURE = id("textures/entity/courier/sparrow.png");
-    private static final ResourceLocation SPARROW_FLY_TEXTURE = id("textures/entity/courier/sparrowfly.png");
-    private static final ResourceLocation BARN_OWL_TEXTURE = id("textures/entity/courier/barnowl.png");
-    private static final ResourceLocation BARN_OWL_FLY_TEXTURE = id("textures/entity/courier/barnowlfly.png");
-    private static final ResourceLocation RAVEN_ANIMATION = id("animations/animation.raven.json");
-    private static final ResourceLocation SPARROW_ANIMATION = id("animations/animation.sparrow.json");
-    private static final ResourceLocation SPARROW_FLY_ANIMATION = id("animations/animation.sparrow.fly.json");
-    private static final ResourceLocation BARN_OWL_ANIMATION = id("animations/animation.barnowl.json");
-    private static final ResourceLocation BARN_OWL_FLY_ANIMATION = id("animations/animation.barnowlfly.json");
+public final class CourierBirdModel extends EntityModel<Mob> {
+    private final BoopletModel<CourierBoopletEntity> booplet;
+    private final CapybaraModel<CourierCapybaraEntity> capybara;
+    private final CoatiModel<CourierCoatiEntity> coati;
+    private final MossbloomModel<CourierMossbloomEntity> mossbloom;
+    private final RedPandaModel<CourierRedPandaEntity> redPanda;
+    private EntityModel active;
 
-    private static ResourceLocation id(String path) { return ResourceLocation.fromNamespaceAndPath(NoverisLetter.MOD_ID, path); }
+    public CourierBirdModel(EntityRendererProvider.Context context) {
+        this.booplet = new BoopletModel<>(context.bakeLayer(CourierModelLayers.BOOPLET));
+        this.capybara = new CapybaraModel<>(context.bakeLayer(CourierModelLayers.CAPYBARA));
+        this.coati = new CoatiModel<>(context.bakeLayer(CourierModelLayers.COATI));
+        this.mossbloom = new MossbloomModel<>(context.bakeLayer(CourierModelLayers.MOSSBLOOM));
+        this.redPanda = new RedPandaModel<>(context.bakeLayer(CourierModelLayers.RED_PANDA));
+        this.active = mossbloom;
+    }
 
-    @Override
-    public ResourceLocation getModelResource(CourierBirdEntity entity) {
-        ResourceLocation id = entity.getAppearanceId();
-        if (id.equals(CourierAppearanceRegistry.SPARROW_ID)) return entity.isFlying() ? SPARROW_FLY_MODEL : SPARROW_MODEL;
-        if (id.equals(CourierAppearanceRegistry.BARN_OWL_ID)) return entity.isFlying() ? BARN_OWL_FLY_MODEL : BARN_OWL_MODEL;
-        return entity.isFlying() ? RAVEN_FLY_MODEL : RAVEN_MODEL;
+    private EntityModel select(CourierBirdEntity entity) {
+        var id = entity.getAppearanceId();
+        if (id.equals(CourierAppearanceRegistry.BOOPLET_ID)) return booplet;
+        if (id.equals(CourierAppearanceRegistry.CAPYBARA_ID)) return capybara;
+        if (id.equals(CourierAppearanceRegistry.COATI_ID)) return coati;
+        if (id.equals(CourierAppearanceRegistry.RED_PANDA_ID)) return redPanda;
+        return mossbloom;
     }
 
     @Override
-    public ResourceLocation getTextureResource(CourierBirdEntity entity) {
-        ResourceLocation id = entity.getAppearanceId();
-        if (id.equals(CourierAppearanceRegistry.SPARROW_ID)) return entity.isFlying() ? SPARROW_FLY_TEXTURE : SPARROW_TEXTURE;
-        if (id.equals(CourierAppearanceRegistry.BARN_OWL_ID)) return entity.isFlying() ? BARN_OWL_FLY_TEXTURE : BARN_OWL_TEXTURE;
-        return entity.isFlying() ? RAVEN_FLY_TEXTURE : RAVEN_TEXTURE;
+    public void setupAnim(Mob entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        if (!(entity instanceof CourierBirdEntity courier)) return;
+        active = select(courier);
+        active.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        if (active instanceof HierarchicalModel<?> hierarchical) {
+            ModelPart root = hierarchical.root();
+            root.y += (float) Math.sin(ageInTicks * 0.14F) * 0.08F;
+            root.xRot += (float) Math.sin(ageInTicks * 0.10F) * 0.025F;
+        }
     }
 
     @Override
-    public ResourceLocation getAnimationResource(CourierBirdEntity entity) {
-        ResourceLocation id = entity.getAppearanceId();
-        if (id.equals(CourierAppearanceRegistry.SPARROW_ID)) return SPARROW_FLY_ANIMATION;
-        if (id.equals(CourierAppearanceRegistry.BARN_OWL_ID)) return BARN_OWL_FLY_ANIMATION;
-        return RAVEN_ANIMATION;
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
+        active.renderToBuffer(poseStack, vertexConsumer, packedLight, packedOverlay, color);
     }
 }
