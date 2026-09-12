@@ -1,8 +1,11 @@
 package dev.noveris.letter.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.api.distmarker.Dist;
@@ -29,11 +32,6 @@ public final class CourierSpeechManager {
         return ACTIVE.containsKey(entityId);
     }
 
-    public static String message(int entityId) {
-        Speech speech = ACTIVE.get(entityId);
-        return speech == null ? "" : speech.message();
-    }
-
     public static float alpha(int entityId) {
         Speech speech = ACTIVE.get(entityId);
         if (speech == null) return 0.0F;
@@ -42,10 +40,8 @@ public final class CourierSpeechManager {
         return 1.0F;
     }
 
-    public static void render(Entity entity, net.minecraft.client.renderer.entity.EntityRenderer<?> renderer,
-                               net.minecraft.client.renderer.entity.EntityRenderDispatcher dispatcher,
-                               net.minecraft.client.renderer.PoseStack poseStack,
-                               MultiBufferSource buffer, int packedLight) {
+    public static void render(Entity entity, EntityRenderer<?> renderer, EntityRenderDispatcher dispatcher,
+                               PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         Speech speech = ACTIVE.get(entity.getId());
         if (speech == null) return;
 
@@ -54,15 +50,10 @@ public final class CourierSpeechManager {
         String message = speech.message();
         float scale = 0.025F;
         float y = entity.getBbHeight() + 0.62F;
-        int textWidth = font.width(message);
-        int horizontalPadding = 6;
-        float boxWidth = textWidth + horizontalPadding * 2.0F;
-        float boxHeight = 12.0F;
-        float left = -boxWidth / 2.0F;
-        float top = -boxHeight / 2.0F;
-        int alpha = (int) (alpha(entity.getId()) * 255.0F) & 0xFF;
-        int textColor = (alpha << 24) | 0xF2D27A;
-        int background = ((int) (alpha * 0.88F) << 24) | 0x17140F;
+        int opacity = (int) (alpha(entity.getId()) * 255.0F) & 0xFF;
+        int textColor = (opacity << 24) | 0xF2D27A;
+        int backgroundOpacity = (int) (opacity * 0.88F) & 0xFF;
+        int background = (backgroundOpacity << 24) | 0x17140F;
 
         poseStack.pushPose();
         poseStack.translate(0.0D, y, 0.0D);
@@ -70,15 +61,14 @@ public final class CourierSpeechManager {
         poseStack.scale(scale, -scale, scale);
 
         Matrix4f matrix = poseStack.last().pose();
-        Component text = Component.literal(message);
-        float textX = -textWidth / 2.0F;
+        Component text = Component.literal("  " + message + "  ");
+        float textX = -font.width(text) / 2.0F;
         float textY = -font.lineHeight / 2.0F;
         font.drawInBatch(text, textX, textY, textColor, false, matrix, buffer,
                 Font.DisplayMode.NORMAL, background, packedLight);
 
-        // Small golden pixel tail, kept separate so the speech bubble remains compact.
         Component tail = Component.literal("▾");
-        font.drawInBatch(tail, -font.width(tail) / 2.0F, boxHeight / 2.0F - 1.0F,
+        font.drawInBatch(tail, -font.width(tail) / 2.0F, 5.0F,
                 textColor, false, matrix, buffer, Font.DisplayMode.NORMAL, 0, packedLight);
         poseStack.popPose();
     }
