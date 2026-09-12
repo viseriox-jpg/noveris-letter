@@ -21,13 +21,19 @@ import java.util.UUID;
 
 public final class CourierBirdEntity extends PathfinderMob implements GeoEntity {
     private static final EntityDataAccessor<String> APPEARANCE = SynchedEntityData.defineId(CourierBirdEntity.class, EntityDataSerializers.STRING);
-    private static final double FLIGHT_SPEED = 0.085D;
-    private static final double ARRIVAL_DISTANCE = 2.25D;
+    private static final double FLIGHT_SPEED = 0.065D;
+    private static final double ARRIVAL_DISTANCE = 2.0D;
     private static final double FLIGHT_HEIGHT = 4.5D;
+    private static final double DEPARTURE_SPEED = 0.11D;
+    private static final int DEPARTURE_TICKS = 70;
     private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
     private UUID letterId;
     private UUID recipientId;
     private int lostTargetTicks;
+    private int departureTicks;
+    private Vec3 departureVelocity = Vec3.ZERO;
+    private boolean departing;
+    private boolean deliveryFinished;
 
     public CourierBirdEntity(EntityType<? extends CourierBirdEntity> type, Level level) {
         super(type, level);
@@ -40,6 +46,10 @@ public final class CourierBirdEntity extends PathfinderMob implements GeoEntity 
         this.recipientId = recipientId;
         setAppearance(appearance);
         this.lostTargetTicks = 0;
+        this.departureTicks = 0;
+        this.departureVelocity = Vec3.ZERO;
+        this.departing = false;
+        this.deliveryFinished = false;
         setNoGravity(true);
     }
 
@@ -48,6 +58,20 @@ public final class CourierBirdEntity extends PathfinderMob implements GeoEntity 
     public ResourceLocation getAppearanceId() { return ResourceLocation.parse(entityData.get(APPEARANCE)); }
     public void setAppearance(ResourceLocation appearance) { entityData.set(APPEARANCE, appearance.toString()); }
     public boolean isFlying() { return true; }
+    public boolean isDeparting() { return departing; }
+
+    public void beginDeparture(ServerPlayerLike recipient) {
+        Vec3 away = position().subtract(recipient.x(), recipient.y() + 1.5D, recipient.z());
+        Vec3 horizontal = new Vec3(away.x, 0.0D, away.z);
+        if (horizontal.lengthSqr() < 0.01D) horizontal = new Vec3(1.0D, 0.0D, 0.0D);
+        Vec3 direction = horizontal.normalize();
+        departureVelocity = direction.scale(DEPARTURE_SPEED).add(0.0D, 0.018D, 0.0D);
+        departing = true;
+        deliveryFinished = true;
+        departureTicks = 0;
+        setDeltaMovement(departureVelocity);
+        hasImpulse = true;
+    }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
@@ -60,6 +84,15 @@ public final class CourierBirdEntity extends PathfinderMob implements GeoEntity 
         super.tick();
         setNoGravity(true);
         if (level().isClientSide()) return;
+
+        if (departing) {
+            departureTicks++;
+            setDeltaMovement(departureVelocity);
+            hasImpulse = true;
+            if (departureTicks >= DEPARTURE_TICKS) remove(RemovalReason.DISCARDED);
+            return;
+        }
+
         if (letterId == null || recipientId == null) {
             remove(RemovalReason.DISCARDED);
             return;
@@ -79,7 +112,7 @@ public final class CourierBirdEntity extends PathfinderMob implements GeoEntity 
         double distance = toTarget.length();
         if (distance <= ARRIVAL_DISTANCE) {
             setDeltaMovement(Vec3.ZERO);
-            DeliveryManager.finishCourierDelivery(this, target);
+            if (!deliveryFinished) DeliveryManager.finishCourierDelivery(this, target);
             return;
         }
 
@@ -98,6 +131,7 @@ public final class CourierBirdEntity extends PathfinderMob implements GeoEntity 
         tag.putString("appearance", getAppearanceId().toString());
         if (letterId != null) tag.putUUID("letter", letterId);
         if (recipientId != null) tag.putUUID("recipient", recipientId);
+        tag.putBoolean("departing", departing);
     }
 
     @Override
@@ -106,19 +140,24 @@ public final class CourierBirdEntity extends PathfinderMob implements GeoEntity 
         String appearance = tag.getString("appearance");
         if (appearance == null || appearance.isBlank()) appearance = CourierAppearanceRegistry.DEFAULT_ID.toString();
         setAppearance(ResourceLocation.parse(appearance));
-        letterId = tag.getUUID("letter");
-        recipientId = tag.getUUID("recipient");
+        if (tag.hasUUID("letter")) letterId = tag.getUUID("letter");
+        if (tag.hasUUID("recipient")) recipientId = tag.getUUID("recipient");
+        departing = tag.getBoolean("departing");
+        deliveryFinished = departing;
         setNoGravity(true);
     }
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "movement", 0, state -> {
-            if (isFlying()) return state.setAndContinue(RawAnimation.begin().thenLoop("fly"));
-            return state.setAndContinue(RawAnimation.begin().thenLoop(state.isMoving() ? "walk" : "idle"));
-        }));
+        controllers.add(new AnimationController<>(this, "flight", 0, state ->
+                state.setAndContinue(RawAnimation.begin().thenLoop("fly"))));
     }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() { return geoCache; }
+
+    /** Small adapter to keep the departure calculation independent of the concrete server player type. */
+    public record ServerPlayerLike(double x, double y, double z) {
+        public ServerPlayerLike(net.minecraft.server.level.ServerPlayer player) { this(player.getX(), player.getY(), player.getZ()); }
+    }
 }
