@@ -18,6 +18,48 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - name: Import authorized Frikinzi bird assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          FAUNA_URL="$(python - <<'PY'
+          import json, urllib.request
+          version = json.load(urllib.request.urlopen('https://api.modrinth.com/v2/version/Z0gsHRNS'))
+          print(next(item['url'] for item in version['files'] if item.get('primary')))
+          PY
+          )"
+          curl -fsSL "$FAUNA_URL" -o /tmp/frikinzis-fauna.jar
+
+          mkdir -p src/main/resources/assets/noveris_letter/geo/entity/{raven,sparrow,barnowl}
+          mkdir -p src/main/resources/assets/noveris_letter/textures/entity/courier
+          mkdir -p src/main/resources/assets/noveris_letter/animations
+
+          copy_asset() {
+            local source="$1"
+            local target="$2"
+            unzip -p /tmp/frikinzis-fauna.jar "$source" > "$target"
+            test -s "$target"
+          }
+
+          copy_asset assets/creatures/geo/entity/raven/raven.geo.json src/main/resources/assets/noveris_letter/geo/entity/raven/raven.geo.json
+          copy_asset assets/creatures/geo/entity/raven/ravenfly.geo.json src/main/resources/assets/noveris_letter/geo/entity/raven/ravenfly.geo.json
+          copy_asset assets/creatures/geo/entity/sparrow/sparrow.geo.json src/main/resources/assets/noveris_letter/geo/entity/sparrow/sparrow.geo.json
+          copy_asset assets/creatures/geo/entity/sparrow/sparrowfly.geo.json src/main/resources/assets/noveris_letter/geo/entity/sparrow/sparrowfly.geo.json
+          copy_asset assets/creatures/geo/entity/barnowl/barnowl.geo.json src/main/resources/assets/noveris_letter/geo/entity/barnowl/barnowl.geo.json
+          copy_asset assets/creatures/geo/entity/barnowl/barnowlfly.geo.json src/main/resources/assets/noveris_letter/geo/entity/barnowl/barnowlfly.geo.json
+
+          copy_asset assets/creatures/textures/entity/raven/raven.png src/main/resources/assets/noveris_letter/textures/entity/courier/raven.png
+          copy_asset assets/creatures/textures/entity/raven/ravenfly.png src/main/resources/assets/noveris_letter/textures/entity/courier/ravenfly.png
+          copy_asset assets/creatures/textures/entity/sparrow/sparrow1m.png src/main/resources/assets/noveris_letter/textures/entity/courier/sparrow.png
+          copy_asset assets/creatures/textures/entity/sparrow/sparrow1mfly.png src/main/resources/assets/noveris_letter/textures/entity/courier/sparrowfly.png
+          copy_asset assets/creatures/textures/entity/barnowl/barnowl.png src/main/resources/assets/noveris_letter/textures/entity/courier/barnowl.png
+          copy_asset assets/creatures/textures/entity/barnowl/barnowlfly.png src/main/resources/assets/noveris_letter/textures/entity/courier/barnowlfly.png
+
+          copy_asset assets/creatures/animations/animation.raven.json src/main/resources/assets/noveris_letter/animations/animation.raven.json
+          copy_asset assets/creatures/animations/animation.sparrow.json src/main/resources/assets/noveris_letter/animations/animation.sparrow.json
+          copy_asset assets/creatures/animations/animation.sparrow.fly.json src/main/resources/assets/noveris_letter/animations/animation.sparrow.fly.json
+          copy_asset assets/creatures/animations/animation.barnowl.json src/main/resources/assets/noveris_letter/animations/animation.barnowl.json
+          copy_asset assets/creatures/animations/animation.barnowlfly.json src/main/resources/assets/noveris_letter/animations/animation.barnowlfly.json
       - name: Build
         run: ./gradlew build --no-daemon
       - name: Upload jar
