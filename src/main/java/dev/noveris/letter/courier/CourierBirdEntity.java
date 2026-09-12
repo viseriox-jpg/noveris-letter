@@ -1,6 +1,7 @@
 package dev.noveris.letter.courier;
 
 import dev.noveris.letter.delivery.DeliveryManager;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -8,8 +9,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -58,24 +57,19 @@ public final class CourierBirdEntity extends PathfinderMob implements GeoEntity 
     }
 
     @Override
-    protected void addAdditionalSaveData(ValueOutput output) {
-        super.addAdditionalSaveData(output);
-        output.putString("appearance", getAppearanceId().toString());
-        if (letterId != null) output.putString("letter", letterId.toString());
-        if (recipientId != null) output.putString("recipient", recipientId.toString());
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putString("appearance", getAppearanceId().toString());
+        if (letterId != null) tag.putUUID("letter", letterId);
+        if (recipientId != null) tag.putUUID("recipient", recipientId);
     }
 
     @Override
-    protected void readAdditionalSaveData(ValueInput input) {
-        super.readAdditionalSaveData(input);
-        setAppearance(ResourceLocation.parse(input.getStringOr("appearance", CourierAppearanceRegistry.DEFAULT_ID.toString())));
-        letterId = parseUuid(input.getStringOr("letter", ""));
-        recipientId = parseUuid(input.getStringOr("recipient", ""));
-    }
-
-    private static UUID parseUuid(String value) {
-        if (value == null || value.isBlank()) return null;
-        try { return UUID.fromString(value); } catch (IllegalArgumentException ignored) { return null; }
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        setAppearance(ResourceLocation.parse(tag.getString("appearance").orElse(CourierAppearanceRegistry.DEFAULT_ID.toString())));
+        letterId = tag.getUUID("letter").orElse(null);
+        recipientId = tag.getUUID("recipient").orElse(null);
     }
 
     @Override
