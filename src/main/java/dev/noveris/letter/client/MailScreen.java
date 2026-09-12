@@ -147,7 +147,7 @@ public final class MailScreen extends Screen {
                 anonymous = !anonymous;
                 return true;
             }
-            if (mouseInside(mainRight - 136, buttonY, 112, 27, mouseX, mouseY)) {
+            if (mouseInside(right - 136, buttonY, 112, 27, mouseX, mouseY)) {
                 send();
                 return true;
             }
@@ -205,8 +205,6 @@ public final class MailScreen extends Screen {
         g.fill(left + 3, bottom - 44, right - 3, bottom - 42, 0xFF5C4C22);
         g.drawString(font, "+", left + 7, top + 7, GOLD, false);
         g.drawString(font, "+", right - 13, top + 7, GOLD, false);
-        g.drawString(font, "+", left + 7, bottom - 15, GOLD, false);
-        g.drawString(font, "+", right - 13, bottom - 15, GOLD, false);
     }
 
     private void drawTabButtons(GuiGraphics g, int left, int top, int mouseX, int mouseY) {
@@ -256,11 +254,13 @@ public final class MailScreen extends Screen {
     }
 
     private void drawComposeButtons(GuiGraphics g, int left, int top, int bottom, int mouseX, int mouseY) {
-        int mainRight = composeMainRight(), y = bottom - 39;
-        drawButton(g, left + 24, y, 118, 27, "CANCELAR", false, mouseX, mouseY);
-        drawButton(g, left + 150, y, 118, 27, anonymous ? "ANONIMA" : "ANONIMA", anonymous, mouseX, mouseY);
-        drawButton(g, mainRight - 136, y, 112, 27, "ENVIAR", true, mouseX, mouseY);
-        g.drawString(font, anonymous ? "Sua identidade ficará oculta." : "O destinatário verá quem enviou.", left + 286, y + 9, MUTED, false);
+        int y = bottom - 39;
+        int cancelX = left + 24;
+        int anonymousX = left + 150;
+        int sendX = left + panelWidth() - 136;
+        drawButton(g, cancelX, y, 118, 27, "CANCELAR", false, mouseX, mouseY);
+        drawButton(g, anonymousX, y, 118, 27, "ANÔNIMA", anonymous, mouseX, mouseY);
+        drawButton(g, sendX, y, 112, 27, "ENVIAR", true, mouseX, mouseY);
     }
 
     private void drawButton(GuiGraphics g, int x, int y, int w, int h, String label, boolean selected, int mouseX, int mouseY) {
