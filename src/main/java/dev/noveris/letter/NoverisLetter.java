@@ -4,9 +4,9 @@ import com.mojang.logging.LogUtils;
 import dev.noveris.letter.courier.CourierEntities;
 import dev.noveris.letter.delivery.DeliveryManager;
 import dev.noveris.letter.network.MailNetwork;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.Mob;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -33,16 +33,15 @@ public final class NoverisLetter {
     private static void registerEntityAttributes(EntityAttributeCreationEvent event) {
         AttributeSupplier attributes = Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 8.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.35D)
+                .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .build();
-        event.put(CourierEntities.COURIER_BIRD.get(), attributes);
+        event.put(CourierEntities.COURIER_BOOPLET.get(), attributes);
+        event.put(CourierEntities.COURIER_CAPYBARA.get(), attributes);
+        event.put(CourierEntities.COURIER_COATI.get(), attributes);
+        event.put(CourierEntities.COURIER_MOSSBLOOM.get(), attributes);
+        event.put(CourierEntities.COURIER_RED_PANDA.get(), attributes);
     }
 
-    private static void registerCommands(RegisterCommandsEvent event) {
-        MailCommands.register(event);
-    }
-
-    private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        MailNetwork.register(event);
-    }
+    private static void registerCommands(RegisterCommandsEvent event) { MailCommands.register(event); }
+    private static void registerPayloads(RegisterPayloadHandlersEvent event) { MailNetwork.register(event); }
 }
