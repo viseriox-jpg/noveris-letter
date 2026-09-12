@@ -89,8 +89,8 @@ public final class DeliveryManager {
 
     private static Vec3 findSpawnPosition(ServerPlayer recipient, CourierBirdEntity courier) {
         double angle = recipient.getRandom().nextDouble() * Math.PI * 2.0D;
-        double distance = 40.0D + recipient.getRandom().nextDouble() * 16.0D;
-        double height = 4.5D + recipient.getRandom().nextDouble() * 2.0D;
+        double distance = 52.0D + recipient.getRandom().nextDouble() * 16.0D;
+        double height = 7.0D + recipient.getRandom().nextDouble() * 3.0D;
         double x = recipient.getX() + Math.cos(angle) * distance;
         double z = recipient.getZ() + Math.sin(angle) * distance;
         double y = recipient.getY() + height;
@@ -132,7 +132,7 @@ public final class DeliveryManager {
                             : "O mensageiro deixou a correspondência aos seus pés porque sua mochila estava cheia."), true);
         }
         clearActive(letter.id());
-        courier.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+        courier.beginDeparture(recipient);
     }
 
     private static void reconcileActivePresentations(MinecraftServer server) {
