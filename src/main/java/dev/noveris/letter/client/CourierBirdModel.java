@@ -15,7 +15,9 @@ public final class CourierBirdModel extends GeoModel<CourierBirdEntity> {
     private static final ResourceLocation BARN_OWL_TEXTURE = id("textures/entity/courier/barnowl.png");
     private static final ResourceLocation RAVEN_ANIMATION = id("animations/animation.raven.json");
     private static final ResourceLocation SPARROW_ANIMATION = id("animations/animation.sparrow.json");
+    private static final ResourceLocation SPARROW_FLY_ANIMATION = id("animations/animation.sparrow.fly.json");
     private static final ResourceLocation BARN_OWL_ANIMATION = id("animations/animation.barnowl.json");
+    private static final ResourceLocation BARN_OWL_FLY_ANIMATION = id("animations/animation.barnowlfly.json");
 
     private static ResourceLocation id(String path) { return ResourceLocation.fromNamespaceAndPath(NoverisLetter.MOD_ID, path); }
 
@@ -26,6 +28,7 @@ public final class CourierBirdModel extends GeoModel<CourierBirdEntity> {
         if (id.equals(CourierAppearanceRegistry.BARN_OWL_ID)) return BARN_OWL_MODEL;
         return RAVEN_MODEL;
     }
+
     @Override
     public ResourceLocation getTextureResource(CourierBirdEntity entity) {
         ResourceLocation id = entity.getAppearanceId();
@@ -33,11 +36,16 @@ public final class CourierBirdModel extends GeoModel<CourierBirdEntity> {
         if (id.equals(CourierAppearanceRegistry.BARN_OWL_ID)) return BARN_OWL_TEXTURE;
         return RAVEN_TEXTURE;
     }
+
     @Override
     public ResourceLocation getAnimationResource(CourierBirdEntity entity) {
         ResourceLocation id = entity.getAppearanceId();
-        if (id.equals(CourierAppearanceRegistry.SPARROW_ID)) return SPARROW_ANIMATION;
-        if (id.equals(CourierAppearanceRegistry.BARN_OWL_ID)) return BARN_OWL_ANIMATION;
+        if (id.equals(CourierAppearanceRegistry.SPARROW_ID)) {
+            return entity.isFlying() ? SPARROW_FLY_ANIMATION : SPARROW_ANIMATION;
+        }
+        if (id.equals(CourierAppearanceRegistry.BARN_OWL_ID)) {
+            return entity.isFlying() ? BARN_OWL_FLY_ANIMATION : BARN_OWL_ANIMATION;
+        }
         return RAVEN_ANIMATION;
     }
 }
