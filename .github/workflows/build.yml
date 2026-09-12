@@ -34,7 +34,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          FRIGINZI_URL="https://api.modrinth.com/maven/maven.modrinth/OsLkXa0u/Z0gsHRNS"
+          FRIGINZI_URL="$(python - <<'PY'
+          import json, urllib.request
+          version = json.load(urllib.request.urlopen('https://api.modrinth.com/v2/version/Z0gsHRNS'))
+          print(next(item['url'] for item in version['files'] if item.get('primary')))
+          PY
+          )"
           curl -fsSL "$FRIGINZI_URL" -o /tmp/frikinzis-fauna.jar
           python tools/import_legacy_bird_assets.py /tmp/frikinzis-fauna.jar
       - name: Build
