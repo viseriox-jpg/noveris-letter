@@ -26,7 +26,7 @@ public final class CourierCapybaraEntity extends TamableAnimal implements Courie
     public final AnimationState standingUpAnimationState = new AnimationState();
     public final AnimationState swimAnimationState = new AnimationState();
     private final CourierState courierState = new CourierState(this);
-    public CourierCapybaraEntity(EntityType<? extends TamableAnimal> type, Level level) { super(type, level); setNoGravity(true); }
+    public CourierCapybaraEntity(EntityType<? extends TamableAnimal> type, Level level) { super(type, level); }
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) { super.defineSynchedData(b); b.define(COURIER_APPEARANCE, CourierAppearanceRegistry.CAPYBARA_ID.toString()); }
     public boolean isForceSleeping() { return false; }
     public boolean isSleeping() { return false; }
