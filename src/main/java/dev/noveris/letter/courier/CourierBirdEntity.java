@@ -6,6 +6,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.Level;
@@ -60,8 +61,8 @@ public final class CourierBirdEntity extends PathfinderMob implements GeoEntity 
     public boolean isFlying() { return true; }
     public boolean isDeparting() { return departing; }
 
-    public void beginDeparture(ServerPlayerLike recipient) {
-        Vec3 away = position().subtract(recipient.x(), recipient.y() + 1.5D, recipient.z());
+    public void beginDeparture(ServerPlayer recipient) {
+        Vec3 away = position().subtract(recipient.getX(), recipient.getY() + 1.5D, recipient.getZ());
         Vec3 horizontal = new Vec3(away.x, 0.0D, away.z);
         if (horizontal.lengthSqr() < 0.01D) horizontal = new Vec3(1.0D, 0.0D, 0.0D);
         Vec3 direction = horizontal.normalize();
@@ -155,9 +156,4 @@ public final class CourierBirdEntity extends PathfinderMob implements GeoEntity 
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() { return geoCache; }
-
-    /** Small adapter to keep the departure calculation independent of the concrete server player type. */
-    public record ServerPlayerLike(double x, double y, double z) {
-        public ServerPlayerLike(net.minecraft.server.level.ServerPlayer player) { this(player.getX(), player.getY(), player.getZ()); }
-    }
 }
