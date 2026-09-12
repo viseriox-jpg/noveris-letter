@@ -54,6 +54,7 @@ public final class MailScreen extends Screen {
         if (tab == 2) createComposeFields();
         refreshOnlinePlayers();
         if (tab < 2) requestPage();
+        if (courierPage >= courierTotalPages()) courierPage = courierTotalPages() - 1;
     }
 
     @Override
@@ -92,6 +93,7 @@ public final class MailScreen extends Screen {
     private void selectTab(int index) {
         tab = index;
         page = 0;
+        if (tab == 3) courierPage = 0;
         preview = null;
         clearWidgets();
         init();
@@ -145,30 +147,35 @@ public final class MailScreen extends Screen {
         }
 
         if (tab == 3) {
-            int cardTop = courierCardTop(), cardBottom = courierCardBottom(), gap = 10;
+            int navY = courierNavY();
+            int pages = courierTotalPages();
+
+            // Handle pagination FIRST. Card hitboxes never overlap this zone.
+            if (inside(left + 24, navY, 130, 27, mouseX, mouseY)) {
+                if (courierPage > 0) courierPage--;
+                return true;
+            }
+            if (inside(right - 154, navY, 130, 27, mouseX, mouseY)) {
+                if (courierPage + 1 < pages) courierPage++;
+                return true;
+            }
+
+            int cardTop = courierCardTop(), gap = 10;
             int cardW = (panelWidth() - 48 - gap * 2) / 3;
             int cardH = courierCardHeight();
             int start = courierPage * COURIERS_PER_PAGE;
             int end = Math.min(COURIERS.length, start + COURIERS_PER_PAGE);
 
+            // Only the SELECT button is clickable, so cards can never steal the page controls.
             for (int i = start; i < end; i++) {
                 int local = i - start, row = local / 3, col = local % 3;
                 int x = left + 24 + col * (cardW + gap), y = cardTop + row * (cardH + gap);
-                if (inside(x, y, cardW, cardH, mouseX, mouseY)) {
+                int buttonY = y + cardH - 29;
+                if (inside(x + 14, buttonY, cardW - 28, 25, mouseX, mouseY)) {
                     selectedCourierIndex = i;
                     PacketDistributor.sendToServer(new SelectCourierPayload(COURIERS[i]));
                     return true;
                 }
-            }
-
-            int navY = bottom() - 39;
-            if (inside(left + 24, navY, 130, 27, mouseX, mouseY) && courierPage > 0) {
-                courierPage--;
-                return true;
-            }
-            if (inside(right - 154, navY, 130, 27, mouseX, mouseY) && courierPage + 1 < courierTotalPages()) {
-                courierPage++;
-                return true;
             }
             return false;
         }
@@ -268,7 +275,7 @@ public final class MailScreen extends Screen {
         g.drawString(font, "CARTEIROS DISPONÍVEIS", left + 24, top + 73, GOLD, false);
         g.drawString(font, "Escolha o mensageiro das próximas entregas.", left + 24, top + 84, MUTED, false);
 
-        int cardTop = courierCardTop(), cardBottom = courierCardBottom(), gap = 10;
+        int cardTop = courierCardTop(), gap = 10;
         int cardW = (panelWidth() - 48 - gap * 2) / 3;
         int cardH = courierCardHeight();
         int start = courierPage * COURIERS_PER_PAGE;
@@ -284,7 +291,7 @@ public final class MailScreen extends Screen {
             g.drawCenteredString(font, truncate(NAMES[i], Math.max(12, cardW / 7)), x + cardW / 2, y + 14, selected ? GOLD : TEXT);
             g.drawCenteredString(font, truncate(DESC[i], Math.max(15, cardW / 6)), x + cardW / 2, y + 35, MUTED);
             g.drawCenteredString(font, i < 5 ? "CAMINHA ATÉ VOCÊ" : "VOA ATÉ VOCÊ", x + cardW / 2, y + 56, DIM);
-            int buttonY = y + Math.max(70, cardH - 29);
+            int buttonY = y + cardH - 29;
             drawButton(g, x + 14, buttonY, cardW - 28, 25, selected ? "SELECIONADO" : "SELECIONAR", selected, mx, my);
         }
 
@@ -292,7 +299,7 @@ public final class MailScreen extends Screen {
     }
 
     private void drawCourierPagination(GuiGraphics g, int left, int bottom, int right, int mx, int my) {
-        int navY = bottom - 39;
+        int navY = courierNavY();
         int pages = courierTotalPages();
         drawButton(g, left + 24, navY, 130, 27, "ANTERIOR", courierPage > 0, mx, my);
         drawButton(g, right - 154, navY, 130, 27, "PRÓXIMA", courierPage + 1 < pages, mx, my);
@@ -378,12 +385,14 @@ public final class MailScreen extends Screen {
 
     private int bottom() { return Math.min(height - 10, top() + panelHeight()); }
 
+    private int courierNavY() { return bottom() - 39; }
+
     private int courierCardTop() { return top() + 101; }
 
-    private int courierCardBottom() { return bottom() - 55; }
-
     private int courierCardHeight() {
-        int available = courierCardBottom() - courierCardTop() - 10;
-        return Math.max(96, available / 2);
+        int gap = 10;
+        int available = courierNavY() - courierCardTop() - gap;
+        // Keep a hard ceiling so the second row can never approach the pagination bar.
+        return Math.max(96, Math.min(180, available / 2));
     }
 }
