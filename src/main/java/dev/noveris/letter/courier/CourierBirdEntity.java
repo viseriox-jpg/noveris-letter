@@ -1,0 +1,134 @@
+package dev.noveris.letter.courier;
+
+import dev.noveris.letter.delivery.DeliveryManager;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+
+import java.util.UUID;
+
+public final class CourierBirdEntity extends PathfinderMob implements GeoEntity {
+    private static final EntityDataAccessor<String> APPEARANCE =
+            SynchedEntityData.defineId(CourierBirdEntity.class, EntityDataSerializers.STRING);
+
+    private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
+    private UUID letterId;
+    private UUID recipientId;
+    private int lostTargetTicks;
+
+    public CourierBirdEntity(EntityType<? extends CourierBirdEntity> type, Level level) {
+        super(type, level);
+        this.setPersistenceRequired();
+    }
+
+    public void configure(UUID letterId, UUID recipientId, ResourceLocation appearance) {
+        this.letterId = letterId;
+        this.recipientId = recipientId;
+        setAppearance(appearance);
+        this.lostTargetTicks = 0;
+    }
+
+    public UUID getLetterId() {
+        return letterId;
+    }
+
+    public UUID getRecipientId() {
+        return recipientId;
+    }
+
+    public ResourceLocation getAppearanceId() {
+        return ResourceLocation.parse(this.entityData.get(APPEARANCE));
+    }
+
+    public void setAppearance(ResourceLocation appearance) {
+        this.entityData.set(APPEARANCE, appearance.toString());
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(APPEARANCE, CourierAppearanceRegistry.DEFAULT_ID.toString());
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (level().isClientSide()) return;
+        if (letterId == null || recipientId == null) {
+            remove(RemovalReason.DISCARDED);
+            return;
+        }
+
+        var target = level().getServer() == null ? null : level().getServer().getPlayerList().getPlayer(recipientId);
+        if (target == null || target.isRemoved() || target.isSpectator()) {
+            lostTargetTicks++;
+            getNavigation().stop();
+            if (lostTargetTicks > 200) remove(RemovalReason.DISCARDED);
+            return;
+        }
+
+        lostTargetTicks = 0;
+        double distance = distanceTo(target);
+        if (distance <= 2.25D) {
+            DeliveryManager.finishCourierDelivery(this, target);
+            return;
+        }
+
+        getLookControl().setLookAt(target, 30.0F, 30.0F);
+        if (tickCount % 10 == 0 || getNavigation().isDone()) {
+            getNavigation().moveTo(target, 1.15D);
+        }
+    }
+
+    @Override
+    protected void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.putString("appearance", getAppearanceId().toString());
+        if (letterId != null) output.putString("letter", letterId.toString());
+        if (recipientId != null) output.putString("recipient", recipientId.toString());
+    }
+
+    @Override
+    protected void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        setAppearance(ResourceLocation.parse(input.getStringOr("appearance", CourierAppearanceRegistry.DEFAULT_ID.toString())));
+        letterId = parseUuid(input.getStringOr("letter", ""));
+        recipientId = parseUuid(input.getStringOr("recipient", ""));
+    }
+
+    private static UUID parseUuid(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "movement", 4, state -> {
+            if (state.isMoving()) {
+                return state.setAndContinue(RawAnimation.begin().thenLoop("walk"));
+            }
+            return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
+        }));
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return geoCache;
+    }
+}
