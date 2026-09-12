@@ -32,7 +32,7 @@ public final class DeliveryManager {
     private static final int TICK_INTERVAL = 20;
     private static final int MAX_DELIVERIES_PER_PLAYER = 4;
     private static final long RETRY_DELAY_MS = 1000L;
-    private static final int COURIER_SPEECH_TICKS = 60;
+    private static final int COURIER_SPEECH_TICKS = 100;
     private static final Map<UUID, UUID> ACTIVE_COURIERS = new HashMap<>();
 
     private DeliveryManager() { }
