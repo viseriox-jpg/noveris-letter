@@ -9,12 +9,11 @@ import java.util.UUID;
 /** Common contract for every courier that can carry a letter. */
 public interface CourierEntity {
     UUID getLetterId();
-    UUID getRecipientId();
-    UUID getPickupSenderId();
+    UUID getTargetPlayerId();
+    CourierMode getMode();
     ResourceLocation getAppearanceId();
     boolean isWaitingForPickup();
-    void configure(UUID letterId, UUID recipientId, ResourceLocation appearance);
-    void beginPickup(ServerPlayer sender);
+    void configure(UUID letterId, UUID targetPlayerId, ResourceLocation appearance, CourierMode mode);
     void beginDeparture(ServerPlayer player);
     Entity entity();
 }

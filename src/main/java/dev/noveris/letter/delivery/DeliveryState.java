@@ -1,14 +1,11 @@
 package dev.noveris.letter.delivery;
 
 public enum DeliveryState {
-    PICKUP_QUEUED,
+    WAITING_PICKUP,
     PICKUP_PRESENTING,
-    PICKUP_WAITING,
-    QUEUED,
-    READY,
-    PRESENTING,
+    IN_TRANSIT,
+    DELIVERY_PRESENTING,
     DELIVERED,
     RETRY_WAIT,
-    PICKUP_RETRY_WAIT,
     CANCELLED
 }

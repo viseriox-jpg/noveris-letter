@@ -24,17 +24,20 @@ public final class DeliveryQueue {
     public synchronized Optional<DeliveryEntry> find(UUID deliveryId) { return entries.stream().filter(entry -> entry.id().equals(deliveryId)).findFirst(); }
     public synchronized Optional<DeliveryEntry> nextReady(long now) {
         return entries.stream().filter(entry -> entry.earliestDeliveryTime() <= now)
-                .filter(entry -> entry.state() == DeliveryState.QUEUED || entry.state() == DeliveryState.READY || entry.state() == DeliveryState.RETRY_WAIT)
+                .filter(entry -> entry.phase() == DeliveryPhase.DELIVERY)
+                .filter(entry -> entry.state() == DeliveryState.IN_TRANSIT || entry.state() == DeliveryState.RETRY_WAIT)
                 .sorted(ORDER).findFirst();
     }
     public synchronized Optional<DeliveryEntry> nextReadyFor(UUID recipientId, long now) {
         return entries.stream().filter(entry -> entry.recipientId().equals(recipientId)).filter(entry -> entry.earliestDeliveryTime() <= now)
-                .filter(entry -> entry.state() == DeliveryState.QUEUED || entry.state() == DeliveryState.READY || entry.state() == DeliveryState.RETRY_WAIT)
+                .filter(entry -> entry.phase() == DeliveryPhase.DELIVERY)
+                .filter(entry -> entry.state() == DeliveryState.IN_TRANSIT || entry.state() == DeliveryState.RETRY_WAIT)
                 .sorted(ORDER).findFirst();
     }
     public synchronized Optional<DeliveryEntry> nextPickupFor(UUID senderId, long now) {
         return entries.stream().filter(entry -> entry.senderId().equals(senderId)).filter(entry -> entry.earliestDeliveryTime() <= now)
-                .filter(entry -> entry.state() == DeliveryState.PICKUP_QUEUED || entry.state() == DeliveryState.PICKUP_RETRY_WAIT)
+                .filter(entry -> entry.phase() == DeliveryPhase.PICKUP)
+                .filter(entry -> entry.state() == DeliveryState.WAITING_PICKUP || entry.state() == DeliveryState.RETRY_WAIT)
                 .sorted(ORDER).findFirst();
     }
     public synchronized void replace(DeliveryEntry updated) {

@@ -10,6 +10,7 @@ public record DeliveryEntry(
         UUID letterId,
         UUID senderId,
         UUID recipientId,
+        DeliveryPhase phase,
         DeliveryType deliveryType,
         DeliveryPriority priority,
         ResourceLocation courierAppearanceId,
@@ -23,6 +24,7 @@ public record DeliveryEntry(
         Objects.requireNonNull(letterId, "letterId");
         Objects.requireNonNull(senderId, "senderId");
         Objects.requireNonNull(recipientId, "recipientId");
+        Objects.requireNonNull(phase, "phase");
         Objects.requireNonNull(deliveryType, "deliveryType");
         Objects.requireNonNull(priority, "priority");
         Objects.requireNonNull(courierAppearanceId, "courierAppearanceId");
@@ -30,22 +32,17 @@ public record DeliveryEntry(
     }
 
     public DeliveryEntry withState(DeliveryState newState) {
-        return new DeliveryEntry(id, letterId, senderId, recipientId, deliveryType, priority,
+        return new DeliveryEntry(id, letterId, senderId, recipientId, phase, deliveryType, priority,
                 courierAppearanceId, queuedAt, earliestDeliveryTime, attempts, newState);
     }
 
-    public DeliveryEntry readyAt(long timestamp) {
-        return new DeliveryEntry(id, letterId, senderId, recipientId, deliveryType, priority,
-                courierAppearanceId, queuedAt, timestamp, attempts, DeliveryState.READY);
+    public DeliveryEntry beginDeliveryAt(long timestamp) {
+        return new DeliveryEntry(id, letterId, senderId, recipientId, DeliveryPhase.DELIVERY, deliveryType, priority,
+                courierAppearanceId, queuedAt, timestamp, attempts, DeliveryState.IN_TRANSIT);
     }
 
     public DeliveryEntry retryAt(long timestamp) {
-        return new DeliveryEntry(id, letterId, senderId, recipientId, deliveryType, priority,
+        return new DeliveryEntry(id, letterId, senderId, recipientId, phase, deliveryType, priority,
                 courierAppearanceId, queuedAt, timestamp, attempts + 1, DeliveryState.RETRY_WAIT);
-    }
-
-    public DeliveryEntry pickupRetryAt(long timestamp) {
-        return new DeliveryEntry(id, letterId, senderId, recipientId, deliveryType, priority,
-                courierAppearanceId, queuedAt, timestamp, attempts + 1, DeliveryState.PICKUP_RETRY_WAIT);
     }
 }

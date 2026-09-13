@@ -8,7 +8,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class CourierSpeech {
     private CourierSpeech() { }
 
-    public static String randomFor(ResourceLocation appearanceId) {
+    public static String deliveryFor(ResourceLocation appearanceId) {
         List<String> lines = switch (appearanceId.toString()) {
             case "noveris_letter:melon_critter" -> List.of("Chegou! ♡", "Tudo certo!", "Entrega feita!");
             case "noveris_letter:carrot_critter" -> List.of("Prontinho!", "Cheguei!", "Entrega rápida!");
@@ -21,9 +21,9 @@ public final class CourierSpeech {
         return lines.isEmpty() ? "" : lines.get(ThreadLocalRandom.current().nextInt(lines.size()));
     }
 
-    public static String randomPickupFor(ResourceLocation appearanceId) {
+    public static String pickupArrivalFor(ResourceLocation appearanceId) {
         List<String> lines = switch (appearanceId.toString()) {
-            case "noveris_letter:melon_critter" -> List.of("Vim buscar! ♡", "Pode deixar comigo!", "Vim buscar sua carta!");
+            case "noveris_letter:melon_critter" -> List.of("Vim buscar! ♡", "Vim buscar sua carta!");
             case "noveris_letter:carrot_critter" -> List.of("Vim buscar!", "Já levo!", "Pode deixar comigo!");
             case "noveris_letter:wheat_critter" -> List.of("Vou levar com cuidado.", "Vim buscar sua carta.", "Pode deixar comigo.");
             case "noveris_letter:pumpkin_critter" -> List.of("Hehehe... uma carta!", "Vim buscar!", "Essa vai viajar!");
@@ -34,7 +34,7 @@ public final class CourierSpeech {
         return lines.isEmpty() ? "" : lines.get(ThreadLocalRandom.current().nextInt(lines.size()));
     }
 
-    public static String randomPickupDoneFor(ResourceLocation appearanceId) {
+    public static String pickupAcceptedFor(ResourceLocation appearanceId) {
         List<String> lines = switch (appearanceId.toString()) {
             case "noveris_letter:melon_critter" -> List.of("Pode deixar comigo! ♡", "Vou levar!", "Até já!");
             case "noveris_letter:carrot_critter" -> List.of("Pode deixar comigo!", "Já estou indo!", "Até já!");

@@ -13,6 +13,7 @@ public final class DeliveryFactory {
             UUID letterId,
             UUID senderId,
             UUID recipientId,
+            DeliveryPhase phase,
             DeliveryType type,
             DeliveryPriority priority,
             ResourceLocation selectedAppearance,
@@ -28,13 +29,14 @@ public final class DeliveryFactory {
                 letterId,
                 senderId,
                 recipientId,
+                phase,
                 type,
                 priority,
                 appearance,
                 now,
                 earliestDeliveryTime,
                 0,
-                DeliveryState.QUEUED
+                phase == DeliveryPhase.PICKUP ? DeliveryState.WAITING_PICKUP : DeliveryState.IN_TRANSIT
         );
     }
 }

@@ -5,6 +5,7 @@ import dev.noveris.letter.courier.CourierProfile;
 import dev.noveris.letter.delivery.DeliveryEntry;
 import dev.noveris.letter.delivery.DeliveryFactory;
 import dev.noveris.letter.delivery.DeliveryPriority;
+import dev.noveris.letter.delivery.DeliveryPhase;
 import dev.noveris.letter.delivery.DeliveryType;
 import dev.noveris.letter.delivery.DeliveryState;
 import net.minecraft.server.MinecraftServer;
@@ -43,10 +44,10 @@ public final class MailService {
                 ? server.getPlayerList().getPlayer(recipientId).getGameProfile().getName()
                 : server.getProfileCache().get(recipientId).map(profile -> profile.getName()).orElse("Unknown player");
         String senderName = anonymous ? "ANÔNIMO" : sender.getGameProfile().getName();
-        MailLetter letter = new MailLetter(id, sender.getUUID(), senderName, recipientId, recipientName, subject.trim(), content, now, now, -1L, -1L, MailStatus.IN_TRANSIT);
+        MailLetter letter = new MailLetter(id, sender.getUUID(), senderName, recipientId, recipientName, subject.trim(), content, now, now, -1L, -1L, MailStatus.WAITING_PICKUP);
         CourierProfile profile = data.profile(sender.getUUID());
-        DeliveryEntry delivery = DeliveryFactory.create(id, sender.getUUID(), recipientId, DeliveryType.NORMAL, DeliveryPriority.NORMAL,
-                appearances.resolveOrDefault(profile.selectedAppearance()).id(), now, now).withState(DeliveryState.PICKUP_QUEUED);
+        DeliveryEntry delivery = DeliveryFactory.create(id, sender.getUUID(), recipientId, DeliveryPhase.PICKUP,
+                DeliveryType.NORMAL, DeliveryPriority.NORMAL, appearances.resolveOrDefault(profile.selectedAppearance()).id(), now, now);
         data.letters().put(id, letter); data.sentByPlayer().computeIfAbsent(sender.getUUID(), ignored -> new java.util.ArrayList<>()).add(id);
         data.deliveryQueue().enqueue(delivery); data.markChanged(); return SendResult.SUCCESS;
     }

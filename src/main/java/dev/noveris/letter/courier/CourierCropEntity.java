@@ -45,8 +45,8 @@ public final class CourierCropEntity extends TamableAnimal implements CourierEnt
     }
 
     @Override public UUID getLetterId() { return courierState.letterId(); }
-    @Override public UUID getRecipientId() { return courierState.recipientId(); }
-    @Override public UUID getPickupSenderId() { return courierState.pickupSenderId(); }
+    @Override public UUID getTargetPlayerId() { return courierState.targetPlayerId(); }
+    @Override public CourierMode getMode() { return courierState.mode(); }
     @Override public boolean isWaitingForPickup() { return courierState.isWaitingForPickup(); }
     @Override public ResourceLocation getAppearanceId() { return ResourceLocation.parse(entityData.get(COURIER_APPEARANCE)); }
 
@@ -56,12 +56,11 @@ public final class CourierCropEntity extends TamableAnimal implements CourierEnt
     }
 
     @Override
-    public void configure(UUID letterId, UUID recipientId, ResourceLocation appearance) {
-        courierState.configure(letterId, recipientId, appearance);
+    public void configure(UUID letterId, UUID targetPlayerId, ResourceLocation appearance, CourierMode mode) {
+        courierState.configure(letterId, targetPlayerId, appearance, mode);
         setAppearance(appearance);
     }
 
-    @Override public void beginPickup(ServerPlayer sender) { courierState.beginPickup(sender); }
     @Override public void beginDeparture(ServerPlayer recipient) { courierState.beginDeparture(recipient); }
     @Override public Entity entity() { return this; }
     @Override public void tick() { super.tick(); courierState.tick(); }
@@ -69,7 +68,7 @@ public final class CourierCropEntity extends TamableAnimal implements CourierEnt
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (!level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-            if (DeliveryManager.tryCollectCourier(this, serverPlayer)) return InteractionResult.SUCCESS;
+            if (DeliveryManager.finishCourierPickup(this, serverPlayer)) return InteractionResult.SUCCESS;
         }
         return super.mobInteract(player, hand);
     }

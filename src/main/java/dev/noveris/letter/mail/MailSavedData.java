@@ -3,6 +3,7 @@ package dev.noveris.letter.mail;
 import dev.noveris.letter.courier.CourierProfile;
 import dev.noveris.letter.delivery.DeliveryEntry;
 import dev.noveris.letter.delivery.DeliveryPriority;
+import dev.noveris.letter.delivery.DeliveryPhase;
 import dev.noveris.letter.delivery.DeliveryQueue;
 import dev.noveris.letter.delivery.DeliveryState;
 import dev.noveris.letter.delivery.DeliveryType;
@@ -70,6 +71,12 @@ public final class MailSavedData extends SavedData {
         List<DeliveryEntry> entries = new ArrayList<>();
         for (int i = 0; i < deliveries.size(); i++) entries.add(readDelivery(deliveries.getCompound(i)));
         data.deliveryQueue.replaceAll(entries);
+        entries.stream().filter(entry -> entry.phase() == DeliveryPhase.PICKUP).forEach(entry -> {
+            MailLetter letter = data.letters.get(entry.letterId());
+            if (letter != null && letter.status() == MailStatus.IN_TRANSIT) {
+                data.letters.put(letter.id(), letter.withStatus(MailStatus.WAITING_PICKUP));
+            }
+        });
 
         ListTag profiles = tag.getList("courier_profiles", Tag.TAG_COMPOUND);
         for (int i = 0; i < profiles.size(); i++) {
@@ -150,14 +157,25 @@ public final class MailSavedData extends SavedData {
     private static CompoundTag writeDelivery(DeliveryEntry entry) {
         CompoundTag tag = new CompoundTag();
         tag.putUUID("id", entry.id()); tag.putUUID("letter", entry.letterId()); tag.putUUID("sender", entry.senderId()); tag.putUUID("recipient", entry.recipientId());
-        tag.putString("type", entry.deliveryType().name()); tag.putString("priority", entry.priority().name()); tag.putString("appearance", entry.courierAppearanceId().toString());
+        tag.putString("phase", entry.phase().name()); tag.putString("type", entry.deliveryType().name()); tag.putString("priority", entry.priority().name()); tag.putString("appearance", entry.courierAppearanceId().toString());
         tag.putLong("queued", entry.queuedAt()); tag.putLong("earliest", entry.earliestDeliveryTime()); tag.putInt("attempts", entry.attempts()); tag.putString("state", entry.state().name());
         return tag;
     }
 
     private static DeliveryEntry readDelivery(CompoundTag tag) {
-        return new DeliveryEntry(tag.getUUID("id"), tag.getUUID("letter"), tag.getUUID("sender"), tag.getUUID("recipient"),
+        String persistedState = tag.getString("state");
+        DeliveryPhase phase = tag.contains("phase") ? DeliveryPhase.valueOf(tag.getString("phase"))
+                : persistedState.startsWith("PICKUP_") ? DeliveryPhase.PICKUP : DeliveryPhase.DELIVERY;
+        DeliveryState state = switch (persistedState) {
+            case "PICKUP_QUEUED", "PICKUP_WAITING" -> DeliveryState.WAITING_PICKUP;
+            case "PICKUP_PRESENTING" -> DeliveryState.PICKUP_PRESENTING;
+            case "PICKUP_RETRY_WAIT", "RETRY_WAIT" -> DeliveryState.RETRY_WAIT;
+            case "QUEUED", "READY" -> DeliveryState.IN_TRANSIT;
+            case "PRESENTING" -> DeliveryState.DELIVERY_PRESENTING;
+            default -> DeliveryState.valueOf(persistedState);
+        };
+        return new DeliveryEntry(tag.getUUID("id"), tag.getUUID("letter"), tag.getUUID("sender"), tag.getUUID("recipient"), phase,
                 DeliveryType.valueOf(tag.getString("type")), DeliveryPriority.valueOf(tag.getString("priority")), ResourceLocation.parse(tag.getString("appearance")),
-                tag.getLong("queued"), tag.getLong("earliest"), tag.getInt("attempts"), DeliveryState.valueOf(tag.getString("state")));
+                tag.getLong("queued"), tag.getLong("earliest"), tag.getInt("attempts"), state);
     }
 }
