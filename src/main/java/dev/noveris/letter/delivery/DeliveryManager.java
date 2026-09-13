@@ -36,7 +36,7 @@ public final class DeliveryManager {
     private static final int TICK_INTERVAL = 20;
     private static final int MAX_DELIVERIES_PER_PLAYER = 4;
     private static final long RETRY_DELAY_MS = 1000L;
-    private static final long PICKUP_DEPARTURE_DELAY_MS = 2000L;
+    private static final long PICKUP_DEPARTURE_DELAY_MS = 10_000L;
     private static final int COURIER_SPEECH_TICKS = 100;
     private static final Map<UUID, UUID> ACTIVE_COURIERS = new HashMap<>();
     private static final Set<UUID> PICKUP_SPEECH_SHOWN = new HashSet<>();
@@ -101,6 +101,10 @@ public final class DeliveryManager {
         if (next.isEmpty()) return false;
 
         DeliveryEntry entry = next.get();
+        // Never show a second courier while the pickup courier is still leaving,
+        // even when sender and recipient are standing in the same area.
+        if (findCourier(server, entry.letterId()) != null) return false;
+        clearActive(entry.letterId());
         MailLetter letter = service.findVisible(recipient, entry.letterId()).orElse(null);
         if (letter == null || letter.status() != MailStatus.IN_TRANSIT || !letter.recipientId().equals(recipient.getUUID())) {
             data.deliveryQueue().remove(entry.id());
@@ -156,7 +160,6 @@ public final class DeliveryManager {
         sender.playNotifySound(SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.65F, 1.05F);
         sender.displayClientMessage(Component.literal("Você entregou a carta ao carteiro."), true);
         PICKUP_SPEECH_SHOWN.remove(letterId);
-        clearActive(letterId);
         courier.beginDeparture(sender);
         return true;
     }
@@ -261,6 +264,11 @@ public final class DeliveryManager {
             if (!pickup && !delivery) continue;
             UUID courierId = ACTIVE_COURIERS.get(entry.letterId());
             if (courierId != null && findEntity(server, courierId) instanceof CourierEntity) continue;
+            CourierEntity persistedCourier = findCourier(server, entry.letterId());
+            if (persistedCourier != null && persistedCourier.getMode() == entryPhaseMode(entry)) {
+                ACTIVE_COURIERS.put(entry.letterId(), persistedCourier.entity().getUUID());
+                continue;
+            }
             data.deliveryQueue().replace(entry.retryAt(now + RETRY_DELAY_MS));
             PICKUP_SPEECH_SHOWN.remove(entry.letterId());
             clearActive(entry.letterId());
@@ -275,6 +283,21 @@ public final class DeliveryManager {
             if (entity != null) return entity;
         }
         return null;
+    }
+
+    private static CourierEntity findCourier(MinecraftServer server, UUID letterId) {
+        for (ServerLevel level : server.getAllLevels()) {
+            for (var entity : level.getAllEntities()) {
+                if (entity instanceof CourierEntity courier && letterId.equals(courier.getLetterId()) && !entity.isRemoved()) {
+                    return courier;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static CourierMode entryPhaseMode(DeliveryEntry entry) {
+        return entry.phase() == DeliveryPhase.PICKUP ? CourierMode.PICKUP : CourierMode.DELIVERY;
     }
 
     private static void clearActive(UUID letterId) { ACTIVE_COURIERS.remove(letterId); }
