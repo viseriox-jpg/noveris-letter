@@ -67,7 +67,7 @@ public final class CourierCropEntity extends TamableAnimal implements CourierEnt
     @Override public void tick() { super.tick(); courierState.tick(); }
 
     @Override
-    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (!level().isClientSide && player instanceof ServerPlayer serverPlayer) {
             if (DeliveryManager.tryCollectCourier(this, serverPlayer)) return InteractionResult.SUCCESS;
         }
