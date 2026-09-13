@@ -18,7 +18,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
@@ -35,6 +34,7 @@ public final class DeliveryManager {
     private static final int TICK_INTERVAL = 20;
     private static final int MAX_DELIVERIES_PER_PLAYER = 4;
     private static final long RETRY_DELAY_MS = 1000L;
+    private static final long PICKUP_DEPARTURE_DELAY_MS = 5000L;
     private static final int COURIER_SPEECH_TICKS = 100;
     private static final Map<UUID, UUID> ACTIVE_COURIERS = new HashMap<>();
     private static final Set<UUID> PICKUP_SPEECH_SHOWN = new HashSet<>();
@@ -141,7 +141,7 @@ public final class DeliveryManager {
         if (service.findVisible(sender, letterId).isEmpty()) return false;
 
         long now = System.currentTimeMillis();
-        data.deliveryQueue().replace(entry.readyAt(now + RETRY_DELAY_MS));
+        data.deliveryQueue().replace(entry.readyAt(now + PICKUP_DEPARTURE_DELAY_MS));
         data.markChanged();
 
         String speech = CourierSpeech.randomPickupDoneFor(courier.getAppearanceId());
