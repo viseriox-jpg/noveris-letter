@@ -34,8 +34,18 @@ public record DeliveryEntry(
                 courierAppearanceId, queuedAt, earliestDeliveryTime, attempts, newState);
     }
 
+    public DeliveryEntry readyAt(long timestamp) {
+        return new DeliveryEntry(id, letterId, senderId, recipientId, deliveryType, priority,
+                courierAppearanceId, queuedAt, timestamp, attempts, DeliveryState.READY);
+    }
+
     public DeliveryEntry retryAt(long timestamp) {
         return new DeliveryEntry(id, letterId, senderId, recipientId, deliveryType, priority,
                 courierAppearanceId, queuedAt, timestamp, attempts + 1, DeliveryState.RETRY_WAIT);
+    }
+
+    public DeliveryEntry pickupRetryAt(long timestamp) {
+        return new DeliveryEntry(id, letterId, senderId, recipientId, deliveryType, priority,
+                courierAppearanceId, queuedAt, timestamp, attempts + 1, DeliveryState.PICKUP_RETRY_WAIT);
     }
 }
