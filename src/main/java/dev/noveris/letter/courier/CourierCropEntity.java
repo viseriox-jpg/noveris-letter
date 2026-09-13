@@ -1,5 +1,6 @@
 package dev.noveris.letter.courier;
 
+import dev.noveris.letter.delivery.DeliveryManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -7,10 +8,13 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -42,6 +46,8 @@ public final class CourierCropEntity extends TamableAnimal implements CourierEnt
 
     @Override public UUID getLetterId() { return courierState.letterId(); }
     @Override public UUID getRecipientId() { return courierState.recipientId(); }
+    @Override public UUID getPickupSenderId() { return courierState.pickupSenderId(); }
+    @Override public boolean isWaitingForPickup() { return courierState.isWaitingForPickup(); }
     @Override public ResourceLocation getAppearanceId() { return ResourceLocation.parse(entityData.get(COURIER_APPEARANCE)); }
 
     /** Changes only the visual appearance; used by the client-side courier preview. */
@@ -55,9 +61,18 @@ public final class CourierCropEntity extends TamableAnimal implements CourierEnt
         setAppearance(appearance);
     }
 
+    @Override public void beginPickup(ServerPlayer sender) { courierState.beginPickup(sender); }
     @Override public void beginDeparture(ServerPlayer recipient) { courierState.beginDeparture(recipient); }
     @Override public Entity entity() { return this; }
     @Override public void tick() { super.tick(); courierState.tick(); }
+
+    @Override
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (!level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            if (DeliveryManager.tryCollectCourier(this, serverPlayer)) return InteractionResult.SUCCESS;
+        }
+        return super.mobInteract(player, hand);
+    }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
