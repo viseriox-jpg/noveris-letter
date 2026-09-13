@@ -10,8 +10,11 @@ import java.util.UUID;
 public interface CourierEntity {
     UUID getLetterId();
     UUID getRecipientId();
+    UUID getPickupSenderId();
     ResourceLocation getAppearanceId();
+    boolean isWaitingForPickup();
     void configure(UUID letterId, UUID recipientId, ResourceLocation appearance);
-    void beginDeparture(ServerPlayer recipient);
+    void beginPickup(ServerPlayer sender);
+    void beginDeparture(ServerPlayer player);
     Entity entity();
 }
