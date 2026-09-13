@@ -32,6 +32,11 @@ public final class DeliveryQueue {
                 .filter(entry -> entry.state() == DeliveryState.QUEUED || entry.state() == DeliveryState.READY || entry.state() == DeliveryState.RETRY_WAIT)
                 .sorted(ORDER).findFirst();
     }
+    public synchronized Optional<DeliveryEntry> nextPickupFor(UUID senderId, long now) {
+        return entries.stream().filter(entry -> entry.senderId().equals(senderId)).filter(entry -> entry.earliestDeliveryTime() <= now)
+                .filter(entry -> entry.state() == DeliveryState.PICKUP_QUEUED || entry.state() == DeliveryState.PICKUP_RETRY_WAIT)
+                .sorted(ORDER).findFirst();
+    }
     public synchronized void replace(DeliveryEntry updated) {
         for (int i = 0; i < entries.size(); i++) if (entries.get(i).id().equals(updated.id())) { entries.set(i, updated); return; }
         throw new IllegalArgumentException("Unknown delivery: " + updated.id());
