@@ -21,6 +21,7 @@ public final class CourierState {
     private UUID letterId;
     private UUID recipientId;
     private UUID pickupSenderId;
+    private UUID departureLookId;
     private ResourceLocation appearanceId = CourierAppearanceRegistry.DEFAULT_ID;
     private int lostTargetTicks;
     private int departureWaitTicks;
@@ -43,6 +44,7 @@ public final class CourierState {
         this.letterId = letterId;
         this.recipientId = recipientId;
         this.pickupSenderId = null;
+        this.departureLookId = null;
         this.appearanceId = appearance;
         lostTargetTicks = 0;
         departureWaitTicks = 0;
@@ -75,6 +77,7 @@ public final class CourierState {
         pickupMode = false;
         pickupWaiting = false;
         pickupSenderId = null;
+        departureLookId = player.getUUID();
 
         Vec3 away = owner.position().subtract(player.getX(), owner.getY(), player.getZ());
         Vec3 horizontal = new Vec3(away.x, 0.0D, away.z);
@@ -100,9 +103,9 @@ public final class CourierState {
         }
 
         if (departureWaiting) {
-            ServerPlayer target = owner.level().getServer() == null
+            ServerPlayer target = owner.level().getServer() == null || departureLookId == null
                     ? null
-                    : owner.level().getServer().getPlayerList().getPlayer(recipientId);
+                    : owner.level().getServer().getPlayerList().getPlayer(departureLookId);
             mob.getNavigation().stop();
             if (target != null && !target.isRemoved() && !target.isSpectator()) {
                 faceTowards(target.position());
@@ -150,7 +153,10 @@ public final class CourierState {
             if (distance <= ARRIVAL_DISTANCE) {
                 mob.getNavigation().stop();
                 faceTowards(sender.position());
-                pickupWaiting = true;
+                if (!pickupWaiting) {
+                    pickupWaiting = true;
+                    DeliveryManager.showPickupSpeech((CourierEntity) owner);
+                }
                 return;
             }
 
@@ -198,6 +204,7 @@ public final class CourierState {
         if (letterId != null) tag.putUUID("courier_letter", letterId);
         if (recipientId != null) tag.putUUID("courier_recipient", recipientId);
         if (pickupSenderId != null) tag.putUUID("courier_pickup_sender", pickupSenderId);
+        if (departureLookId != null) tag.putUUID("courier_departure_look", departureLookId);
         tag.putBoolean("courier_pickup_mode", pickupMode);
         tag.putBoolean("courier_pickup_waiting", pickupWaiting);
         tag.putBoolean("courier_departure_waiting", departureWaiting);
@@ -210,6 +217,7 @@ public final class CourierState {
         if (tag.hasUUID("courier_letter")) letterId = tag.getUUID("courier_letter");
         if (tag.hasUUID("courier_recipient")) recipientId = tag.getUUID("courier_recipient");
         if (tag.hasUUID("courier_pickup_sender")) pickupSenderId = tag.getUUID("courier_pickup_sender");
+        if (tag.hasUUID("courier_departure_look")) departureLookId = tag.getUUID("courier_departure_look");
         pickupMode = tag.getBoolean("courier_pickup_mode");
         pickupWaiting = tag.getBoolean("courier_pickup_waiting");
         departureWaiting = tag.getBoolean("courier_departure_waiting");
